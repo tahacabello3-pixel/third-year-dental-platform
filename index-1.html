@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Dental Platform · Year 3</title>
+  <meta name="description" content="Third-Year Dental Medicine & Oral Surgery Student Platform" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="auth-page">
+
+  <!-- ── Left branding panel ───────────────────────────── -->
+  <aside class="auth-brand" aria-hidden="true">
+    <div class="brand-logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="9" fill="rgba(255,255,255,0.15)"/>
+        <path d="M18 6C13.5 6 10 9 10 13c0 2.2.8 4 1.8 5.5C13 20.5 13 22 12.5 25.5c-.4 2.8 1 4.5 2.5 4.5s2.5-1.5 3-3.5c.5 2 1.5 3.5 3 3.5s2.9-1.7 2.5-4.5C23 22 23 20.5 24.2 18.5c1-1.5 1.8-3.3 1.8-5.5 0-4-3.5-7-8-7z" fill="white"/>
+      </svg>
+      <span class="brand-logo-text">DentalEd · Year 3</span>
+    </div>
+    <h1 class="brand-title">Third-Year Dental Medicine<br>&amp; Oral Surgery Platform</h1>
+    <p class="brand-sub">Everything a third-year dental student needs in one place — lectures, revision materials, past questions, and more.</p>
+    <div class="brand-features">
+      <div class="brand-feature">
+        <div class="brand-feature-icon">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        </div>
+        8 Core Subjects Covered
+      </div>
+      <div class="brand-feature">
+        <div class="brand-feature-icon">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        Secure Student Accounts
+      </div>
+      <div class="brand-feature">
+        <div class="brand-feature-icon">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        Mobile-Friendly Design
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Right form panel ──────────────────────────────── -->
+  <main class="auth-form-panel">
+    <div class="auth-form-box">
+
+      <div class="auth-form-header">
+        <h1>Welcome back</h1>
+        <p>Sign in to your student account to continue.</p>
+      </div>
+
+      <div id="loginAlert" class="alert" role="alert"></div>
+
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@university.edu" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required />
+            <button type="button" class="toggle-password" aria-label="Show password" onclick="togglePwd('password',this)">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="./signup.html">Create one now</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Scripts: CDN first, then our files, then init ── -->
+  <!-- All scripts at the bottom so DOM is ready -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase.js"></script>
+  <script src="./app.js"></script>
+  <script>
+    // Password toggle
+    function togglePwd(inputId, btn) {
+      var input = document.getElementById(inputId);
+      var hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      btn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      btn.querySelector('svg').innerHTML = hidden
+        ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+        : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+
+    // Forgot password
+    document.getElementById('forgotLink').addEventListener('click', async function(e) {
+      e.preventDefault();
+      var email = document.getElementById('email').value.trim();
+      if (!email) { showAlert('loginAlert', 'Enter your email above first, then click Forgot password.'); return; }
+      var res = await _supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + (window.location.pathname.replace('index.html','')) + 'index.html'
+      });
+      if (res.error) { showAlert('loginAlert', res.error.message); }
+      else { showAlert('loginAlert', '✅ Password reset email sent! Check your inbox.', 'success'); }
+    });
+
+    // Init page (functions are defined in app.js loaded above)
+    initLoginPage();
+  </script>
+</body>
+</html>
