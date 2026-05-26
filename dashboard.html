@@ -94,10 +94,7 @@
         <div class="stat-icon green">🎓</div>
         <div><div class="stat-value">3rd</div><div class="stat-label">Year Level</div></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon purple">📅</div>
-        <div><div class="stat-value" id="currentSemester">—</div><div class="stat-label">Semester</div></div>
-      </div>
+
     </div>
 
     <!-- Profile -->
@@ -283,8 +280,7 @@
       document.getElementById('profileYear').textContent      = (profile && profile.academic_year) || 'Third Year';
       document.getElementById('profileStudentId').textContent = (profile && profile.student_id)    || '—';
 
-      var month = new Date().getMonth() + 1;
-      document.getElementById('currentSemester').textContent = (month >= 9 || month <= 1) ? 'S1' : 'S2';
+
 
       document.querySelectorAll('.subject-card').forEach(function(card, i) {
         card.style.animationDelay = (i * 55) + 'ms';
