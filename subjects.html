@@ -3,230 +3,244 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Subjects — Dental Platform · Year 3</title>
-  <meta name="description" content="All third-year dental subjects and course information." />
-
+  <title>Subjects — DentalEd Year 3</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
   <link rel="stylesheet" href="./style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    /* Same loading overlay as dashboard */
     #loadingOverlay {
-      position: fixed; inset: 0;
-      background: var(--white);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px; z-index: 9999;
-      transition: opacity .3s ease;
+      position: fixed; inset: 0; background: #0d0f14;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 9999; transition: opacity .35s ease;
     }
     #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
-    .loading-tooth { font-size: 2.5rem; animation: pulse 1.2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.15)} }
-    .loading-text  { font-size: .9rem; color: var(--gray-500); }
+    .loading-tooth { font-size: 2.8rem; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.18)} }
+    .loading-text { font-size: .88rem; color: #4a5068; font-family: 'Inter', sans-serif; }
+    .loading-bar { width: 120px; height: 3px; background: #1a1e2a; border-radius: 99px; overflow: hidden; }
+    .loading-bar-fill { height: 100%; width: 40%; background: linear-gradient(90deg, #2563eb, #4f8ef7); border-radius: 99px; animation: slide 1.2s ease-in-out infinite; }
+    @keyframes slide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
   </style>
 </head>
 <body>
 
-  <div id="loadingOverlay" aria-label="Loading subjects">
+  <div id="loadingOverlay">
     <div class="loading-tooth">🦷</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
     <div class="loading-text">Loading subjects…</div>
   </div>
 
-  <!-- ── Navigation ─────────────────────────────────────── -->
-  <nav class="topnav" role="navigation" aria-label="Main navigation">
+  <nav class="topnav">
     <div class="topnav-inner">
-
       <a href="./dashboard.html" class="nav-brand">
-        <svg width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#1a65c8"/>
-          <path d="M18 6C13.5 6 10 9 10 13c0 2.2.8 4 1.8 5.5C13 20.5 13 22 12.5 25.5c-.4 2.8 1 4.5 2.5 4.5s2.5-1.5 3-3.5c.5 2 1.5 3.5 3 3.5s2.9-1.7 2.5-4.5C23 22 23 20.5 24.2 18.5c1-1.5 1.8-3.3 1.8-5.5 0-4-3.5-7-8-7z" fill="white"/>
-        </svg>
+        <div class="nav-brand-icon">🦷</div>
         <span class="nav-brand-text">DentalEd</span>
         <span class="nav-brand-badge">Year 3</span>
       </a>
-
-      <div class="nav-links" role="list">
-        <a href="./dashboard.html" class="nav-link" role="listitem">Dashboard</a>
-        <a href="./subjects.html"  class="nav-link active" role="listitem">Subjects</a>
+      <div class="nav-links">
+        <a href="./dashboard.html" class="nav-link">Dashboard</a>
+        <a href="./subjects.html"  class="nav-link active">Subjects</a>
       </div>
-
       <div class="nav-right">
         <div class="nav-user-pill">
-          <div class="nav-avatar" id="navAvatar" aria-hidden="true">S</div>
+          <div class="nav-avatar" id="navAvatar">S</div>
           <span id="navName">Student</span>
         </div>
-        <button id="logoutBtn" class="btn-logout" aria-label="Logout">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <button id="logoutBtn" class="btn-logout">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
           <span>Logout</span>
         </button>
       </div>
-
     </div>
   </nav>
 
-  <!-- ── Main content ───────────────────────────────────── -->
   <main class="page-wrapper">
 
-    <!-- Hero banner -->
     <div class="subjects-hero">
-      <h1>Third-Year Subjects</h1>
-      <p>Dental Medicine &amp; Oral Surgery — complete course overview for Year 3.</p>
+      <h1>📚 Third-Year Subjects</h1>
+      <p>Dental Medicine &amp; Oral Surgery — complete subject list for Year 3 (12 subjects).</p>
     </div>
 
-    <!-- Subject list -->
+    <!-- Clinical subjects -->
     <div class="section-heading">
       <h2>Clinical Subjects</h2>
-      <p>Core clinical disciplines you will study and practise in Year 3.</p>
+      <p>Core clinical disciplines practised in Year 3.</p>
     </div>
 
-    <!-- 1 → Oral Medicine -->
-    <div class="subject-row" role="article" aria-label="Oral Medicine">
-      <div class="subject-row-icon" style="background:#deeeff;color:#1a65c8;">🦷</div>
+    <div class="subject-row" style="--c:var(--red);--cbg:var(--red-bg)">
+      <div class="subject-row-icon" style="background:var(--red-bg);color:var(--red)">🔬</div>
       <div class="subject-row-info">
-        <h3>Oral Medicine</h3>
-        <p>Diagnosis and medical management of oral mucosal diseases, ulcers, white lesions, and orofacial pain. Includes systemic disease manifestations in the oral cavity.</p>
+        <h3>Oral Pathology</h3>
+        <p>Oral mucosal diseases, cysts, tumours, and histopathological interpretation of biopsy specimens.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag clinical">Clinical</span>
-        <div class="subject-credits">4 Credit Hours</div>
-      </div>
-    </div>
-
-    <!-- 2 → Oral Surgery -->
-    <div class="subject-row" role="article" aria-label="Oral Surgery">
-      <div class="subject-row-icon" style="background:#d4f5ea;color:#1a9e6e;">🔬</div>
-      <div class="subject-row-info">
-        <h3>Oral Surgery</h3>
-        <p>Principles of exodontia, surgical extraction of impacted teeth, biopsies, minor oral surgical procedures, haemostasis, and post-operative care.</p>
-      </div>
-      <div class="subject-row-meta">
-        <span class="subject-tag clinical">Clinical</span>
-        <div class="subject-credits">4 Credit Hours</div>
+        <span class="subject-badge" style="background:var(--red-bg);color:var(--red)">Pathology</span>
+        <div class="subject-credits">3 Credit Hours</div>
       </div>
     </div>
 
-    <!-- 3 → Prosthodontics -->
-    <div class="subject-row" role="article" aria-label="Prosthodontics">
-      <div class="subject-row-icon" style="background:#e0f7f4;color:#0d9488;">🦮</div>
+    <div class="subject-row" style="--c:var(--orange);--cbg:var(--orange-bg)">
+      <div class="subject-row-icon" style="background:var(--orange-bg);color:var(--orange)">🏥</div>
       <div class="subject-row-info">
-        <h3>Prosthodontics</h3>
-        <p>Complete and removable partial dentures, fixed prostheses, crown and bridge work, impression techniques, occlusion, and aesthetic considerations.</p>
+        <h3>General Surgery</h3>
+        <p>Surgical principles, wound healing, haemostasis, anaesthesia basics, and operative techniques relevant to dentistry.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag clinical">Clinical</span>
+        <span class="subject-badge" style="background:var(--orange-bg);color:var(--orange)">Surgery</span>
+        <div class="subject-credits">3 Credit Hours</div>
+      </div>
+    </div>
+
+    <div class="subject-row" style="--c:var(--accent);--cbg:var(--accent-bg)">
+      <div class="subject-row-icon" style="background:var(--accent-bg);color:var(--accent)">💊</div>
+      <div class="subject-row-info">
+        <h3>General Medicine</h3>
+        <p>Systemic diseases and their oral manifestations; medical emergencies in dental practice.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--accent-bg);color:var(--accent)">Medicine</span>
+        <div class="subject-credits">3 Credit Hours</div>
+      </div>
+    </div>
+
+    <div class="subject-row" style="--c:var(--teal);--cbg:var(--teal-bg)">
+      <div class="subject-row-icon" style="background:var(--teal-bg);color:var(--teal)">🦷</div>
+      <div class="subject-row-info">
+        <h3>Conservative Dentistry &amp; Endodontics</h3>
+        <p>Caries detection, cavity preparation, restorative materials, and root canal therapy principles.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--teal-bg);color:var(--teal)">Cons</span>
         <div class="subject-credits">5 Credit Hours</div>
       </div>
     </div>
 
-    <!-- 4 → Periodontology -->
-    <div class="subject-row" role="article" aria-label="Periodontology">
-      <div class="subject-row-icon" style="background:#f3e8ff;color:#7c3aed;">🔍</div>
+    <div class="subject-row" style="--c:var(--pink);--cbg:var(--pink-bg)">
+      <div class="subject-row-icon" style="background:var(--pink-bg);color:var(--pink)">👶</div>
       <div class="subject-row-info">
-        <h3>Periodontology</h3>
-        <p>Classification and aetiology of periodontal diseases, periodontal examination, non-surgical therapy, scaling and root planing, and surgical treatment planning.</p>
+        <h3>Pedodontics</h3>
+        <p>Dental care for children and adolescents; behaviour management, pulp therapy, and space maintainers.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag clinical">Clinical</span>
+        <span class="subject-badge" style="background:var(--pink-bg);color:var(--pink)">Pedo</span>
         <div class="subject-credits">3 Credit Hours</div>
       </div>
     </div>
 
-    <!-- 5 → Conservative Dentistry -->
-    <div class="subject-row" role="article" aria-label="Conservative Dentistry">
-      <div class="subject-row-icon" style="background:#fff7ed;color:#c2410c;">⚕️</div>
+    <div class="subject-row" style="--c:var(--indigo);--cbg:var(--indigo-bg)">
+      <div class="subject-row-icon" style="background:var(--indigo-bg);color:var(--indigo)">😁</div>
       <div class="subject-row-info">
-        <h3>Conservative Dentistry</h3>
-        <p>Caries detection and management, restorative materials (composites, amalgam, GIC), cavity preparation principles, and endodontic access and instrumentation.</p>
+        <h3>Orthodontics</h3>
+        <p>Diagnosis of malocclusion, cephalometric analysis, removable and fixed orthodontic appliances.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag clinical">Clinical</span>
-        <div class="subject-credits">5 Credit Hours</div>
-      </div>
-    </div>
-
-    <div class="divider-line"></div>
-
-    <!-- Basic sciences -->
-    <div class="section-heading">
-      <h2>Basic Sciences</h2>
-      <p>Supporting biomedical sciences integrated into clinical practice.</p>
-    </div>
-
-    <!-- 6 → Pharmacology -->
-    <div class="subject-row" role="article" aria-label="Pharmacology">
-      <div class="subject-row-icon" style="background:#fff1f2;color:#be123c;">💊</div>
-      <div class="subject-row-info">
-        <h3>Pharmacology</h3>
-        <p>Dental pharmacology covering local anaesthetics, analgesics, anti-inflammatory drugs, antibiotics, antifungals, and drug interactions relevant to dental practice.</p>
-      </div>
-      <div class="subject-row-meta">
-        <span class="subject-tag pharmacology">Pharmacology</span>
+        <span class="subject-badge" style="background:var(--indigo-bg);color:var(--indigo)">Ortho</span>
         <div class="subject-credits">3 Credit Hours</div>
       </div>
     </div>
 
-    <!-- 7 → Pathology -->
-    <div class="subject-row" role="article" aria-label="Pathology">
-      <div class="subject-row-icon" style="background:#eef2ff;color:#4338ca;">🧬</div>
+    <div class="subject-row" style="--c:var(--purple);--cbg:var(--purple-bg)">
+      <div class="subject-row-icon" style="background:var(--purple-bg);color:var(--purple)">🦴</div>
       <div class="subject-row-info">
-        <h3>Pathology</h3>
-        <p>Oral and maxillofacial pathology: benign and malignant lesions, odontogenic cysts and tumours, bone pathology, salivary gland diseases, and histopathological reporting.</p>
+        <h3>Prosthodontics — Removable</h3>
+        <p>Complete dentures, removable partial dentures, impression techniques, and occlusion.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag pathology">Pathology</span>
-        <div class="subject-credits">3 Credit Hours</div>
+        <span class="subject-badge" style="background:var(--purple-bg);color:var(--purple)">Prosto</span>
+        <div class="subject-credits">4 Credit Hours</div>
       </div>
     </div>
 
-    <!-- 8 → Microbiology -->
-    <div class="subject-row" role="article" aria-label="Microbiology">
-      <div class="subject-row-icon" style="background:#ecfeff;color:#0e7490;">🧫</div>
+    <div class="subject-row" style="--c:var(--amber);--cbg:var(--amber-bg)">
+      <div class="subject-row-icon" style="background:var(--amber-bg);color:var(--amber)">👑</div>
       <div class="subject-row-info">
-        <h3>Microbiology</h3>
-        <p>Oral microbiome composition, cariogenic and periodontal pathogens, cross-infection control, sterilisation, disinfection protocols, and antibiotic resistance.</p>
+        <h3>Crown &amp; Bridge — Fixed</h3>
+        <p>Fixed prostheses design, tooth preparation for crowns, bridges, veneers, and temporisation.</p>
       </div>
       <div class="subject-row-meta">
-        <span class="subject-tag basic">Basic Science</span>
+        <span class="subject-badge" style="background:var(--amber-bg);color:var(--amber)">Crown</span>
+        <div class="subject-credits">4 Credit Hours</div>
+      </div>
+    </div>
+
+    <div class="subject-row" style="--c:var(--green);--cbg:var(--green-bg)">
+      <div class="subject-row-icon" style="background:var(--green-bg);color:var(--green)">🌿</div>
+      <div class="subject-row-info">
+        <h3>Prevention &amp; Community Dentistry</h3>
+        <p>Preventive strategies, fluoride therapy, fissure sealants, oral health education, and epidemiology.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--green-bg);color:var(--green)">Prevention</span>
         <div class="subject-credits">2 Credit Hours</div>
       </div>
     </div>
 
-    <!-- Coming soon notice -->
+    <div class="subject-row" style="--c:var(--cyan);--cbg:var(--cyan-bg)">
+      <div class="subject-row-icon" style="background:var(--cyan-bg);color:var(--cyan)">🩺</div>
+      <div class="subject-row-info">
+        <h3>Oral Medicine</h3>
+        <p>Medical management of oral mucosal disorders, orofacial pain, salivary gland diseases, and ulcers.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--cyan-bg);color:var(--cyan)">Medicine</span>
+        <div class="subject-credits">3 Credit Hours</div>
+      </div>
+    </div>
+
+    <div class="subject-row" style="--c:var(--lime);--cbg:var(--lime-bg)">
+      <div class="subject-row-icon" style="background:var(--lime-bg);color:var(--lime)">🔍</div>
+      <div class="subject-row-info">
+        <h3>Periodontology</h3>
+        <p>Classification and treatment of gum disease; scaling, root planing, and periodontal surgery.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--lime-bg);color:var(--lime)">Perio</span>
+        <div class="subject-credits">3 Credit Hours</div>
+      </div>
+    </div>
+
+    <div class="subject-row" style="--c:var(--rose);--cbg:var(--rose-bg)">
+      <div class="subject-row-icon" style="background:var(--rose-bg);color:var(--rose)">⚔️</div>
+      <div class="subject-row-info">
+        <h3>Oral Surgery</h3>
+        <p>Simple and surgical extractions, impacted teeth, biopsies, and post-operative care.</p>
+      </div>
+      <div class="subject-row-meta">
+        <span class="subject-badge" style="background:var(--rose-bg);color:var(--rose)">Surgery</span>
+        <div class="subject-credits">4 Credit Hours</div>
+      </div>
+    </div>
+
     <div class="coming-soon-note">
-      <strong>📚 Lectures &amp; Revision Materials Coming Soon</strong>
-      Individual subject pages with lecture slides, past questions, and revision notes will be added in the next update.
+      <strong>📖 Lectures & Revision Materials Coming Soon</strong>
+      Individual subject pages with slides, past papers, and notes will be added in the next update.
     </div>
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase.js"></script>
   <script src="./app.js"></script>
   <script>
-    (async () => {
-      const session = await requireAuth();
+    (async function() {
+      var session = await requireAuth();
       if (!session) return;
 
-      const user    = session.user;
-      const profile = await fetchProfile(user.id);
-      const name    = profile?.full_name ?? user.email ?? 'Student';
-
+      var user    = session.user;
+      var profile = await fetchProfile(user.id);
+      var name    = (profile && profile.full_name) ? profile.full_name : (user.email || 'Student');
       document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
       document.getElementById('navName').textContent   = name.split(' ')[0];
 
-      // Animate subject rows
-      const rows = document.querySelectorAll('.subject-row');
-      rows.forEach((row, i) => {
-        row.style.animationDelay = `${i * 70}ms`;
+      document.querySelectorAll('.subject-row').forEach(function(row, i) {
+        row.style.animationDelay = (i * 60) + 'ms';
         row.classList.add('card-animate');
       });
 
-      // Hide loading overlay
-      const overlay = document.getElementById('loadingOverlay');
+      var overlay = document.getElementById('loadingOverlay');
       overlay.classList.add('hidden');
-      setTimeout(() => overlay.remove(), 400);
+      setTimeout(function(){ overlay.remove(); }, 400);
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
     })();
