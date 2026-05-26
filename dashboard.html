@@ -3,39 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — Dental Platform · Year 3</title>
+  <title>Dashboard — DentalEd Year 3</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
   <link rel="stylesheet" href="./style.css" />
   <style>
     #loadingOverlay {
       position: fixed; inset: 0;
-      background: #fff;
+      background: #0d0f14;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 14px; z-index: 9999;
-      transition: opacity .3s ease;
+      gap: 16px; z-index: 9999;
+      transition: opacity .35s ease;
     }
     #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
-    .loading-tooth { font-size: 2.5rem; animation: pulse 1.2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.15)} }
-    .loading-text { font-size: .9rem; color: #6b7280; }
+    .loading-tooth { font-size: 2.8rem; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.18)} }
+    .loading-text { font-size: .88rem; color: #4a5068; font-family: 'Inter', sans-serif; }
+    .loading-bar {
+      width: 120px; height: 3px;
+      background: #1a1e2a;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .loading-bar-fill {
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, #2563eb, #4f8ef7);
+      border-radius: 99px;
+      animation: slide 1.2s ease-in-out infinite;
+    }
+    @keyframes slide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
   </style>
 </head>
 <body>
 
   <div id="loadingOverlay">
     <div class="loading-tooth">🦷</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
     <div class="loading-text">Loading your dashboard…</div>
   </div>
 
-  <!-- Navigation -->
+  <!-- Nav -->
   <nav class="topnav">
     <div class="topnav-inner">
       <a href="./dashboard.html" class="nav-brand">
-        <svg width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="36" height="36" rx="9" fill="#1a65c8"/>
-          <path d="M18 6C13.5 6 10 9 10 13c0 2.2.8 4 1.8 5.5C13 20.5 13 22 12.5 25.5c-.4 2.8 1 4.5 2.5 4.5s2.5-1.5 3-3.5c.5 2 1.5 3.5 3 3.5s2.9-1.7 2.5-4.5C23 22 23 20.5 24.2 18.5c1-1.5 1.8-3.3 1.8-5.5 0-4-3.5-7-8-7z" fill="white"/>
-        </svg>
+        <div class="nav-brand-icon">🦷</div>
         <span class="nav-brand-text">DentalEd</span>
         <span class="nav-brand-badge">Year 3</span>
       </a>
@@ -49,7 +61,7 @@
           <span id="navName">Student</span>
         </div>
         <button id="logoutBtn" class="btn-logout">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
           <span>Logout</span>
@@ -58,14 +70,13 @@
     </div>
   </nav>
 
-  <!-- Main content -->
   <main class="page-wrapper">
 
-    <!-- Welcome banner -->
+    <!-- Welcome -->
     <div class="welcome-banner">
       <div class="welcome-text">
-        <h1>Welcome back, <span id="studentName">Student</span>! 👋</h1>
-        <p>You're on track for your third year. Review your subjects and stay ahead of your studies.</p>
+        <h1>Welcome back, <span id="studentName">Student</span> 👋</h1>
+        <p>Access your subjects, review materials, and stay ahead of your third-year curriculum.</p>
       </div>
       <div class="welcome-badge">
         <div class="welcome-badge-label">Academic Year</div>
@@ -76,26 +87,20 @@
     <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-icon blue">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        </div>
-        <div><div class="stat-value">8</div><div class="stat-label">Subjects</div></div>
+        <div class="stat-icon blue">📚</div>
+        <div><div class="stat-value">12</div><div class="stat-label">Subjects</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-        </div>
+        <div class="stat-icon green">🎓</div>
         <div><div class="stat-value">3rd</div><div class="stat-label">Year Level</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon gray">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        </div>
+        <div class="stat-icon purple">📅</div>
         <div><div class="stat-value" id="currentSemester">—</div><div class="stat-label">Semester</div></div>
       </div>
     </div>
 
-    <!-- Profile card -->
+    <!-- Profile -->
     <section>
       <div class="section-heading">
         <h2>My Profile</h2>
@@ -120,96 +125,138 @@
 
     <div class="divider-line"></div>
 
-    <!-- Subjects grid -->
+    <!-- Subjects -->
     <section>
       <div class="section-heading">
         <h2>My Subjects</h2>
-        <p>Third-year Dental Medicine &amp; Oral Surgery core curriculum.</p>
+        <p>Third-year Dental Medicine &amp; Oral Surgery — 12 core subjects.</p>
       </div>
+
       <div class="subjects-grid">
 
-        <a href="./subjects.html" class="subject-card blue">
-          <div class="subject-icon">🦷</div>
-          <h3>Oral Medicine</h3>
-          <p>Diagnosis and management of oral mucosal diseases and systemic conditions.</p>
-          <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <a href="./subjects.html" class="subject-card green">
+        <a href="./subjects.html" class="subject-card c-red">
           <div class="subject-icon">🔬</div>
-          <h3>Oral Surgery</h3>
-          <p>Principles of exodontia, surgical extractions, and minor oral surgical procedures.</p>
+          <h3>Oral Pathology</h3>
+          <p>Diseases, lesions, and histopathology of the oral cavity.</p>
           <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="subject-tag">Pathology</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
           </div>
         </a>
 
-        <a href="./subjects.html" class="subject-card teal">
-          <div class="subject-icon">🦮</div>
+        <a href="./subjects.html" class="subject-card c-orange">
+          <div class="subject-icon">🏥</div>
+          <h3>General Surgery</h3>
+          <p>Fundamentals of surgical principles and operative techniques.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Surgery</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-blue">
+          <div class="subject-icon">💊</div>
+          <h3>General Medicine</h3>
+          <p>Systemic diseases and their oral manifestations.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Medicine</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-teal">
+          <div class="subject-icon">🦷</div>
+          <h3>Conservative Dentistry</h3>
+          <p>Restorative care, caries management, and root canal treatment.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Cons &amp; Endo</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-pink">
+          <div class="subject-icon">👶</div>
+          <h3>Pedodontics</h3>
+          <p>Dental care for infants, children, and adolescents.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Pediatric</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-indigo">
+          <div class="subject-icon">😁</div>
+          <h3>Orthodontics</h3>
+          <p>Diagnosis and correction of malocclusion and dental irregularities.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Ortho</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-purple">
+          <div class="subject-icon">🦴</div>
           <h3>Prosthodontics</h3>
-          <p>Complete and partial dentures, fixed prostheses, and occlusion fundamentals.</p>
+          <p>Removable complete and partial dentures design and fabrication.</p>
           <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="subject-tag">Prosto</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
           </div>
         </a>
 
-        <a href="./subjects.html" class="subject-card purple">
+        <a href="./subjects.html" class="subject-card c-amber">
+          <div class="subject-icon">👑</div>
+          <h3>Crown &amp; Bridge</h3>
+          <p>Fixed prostheses, crowns, veneers, and bridgework principles.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Fixed</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-green">
+          <div class="subject-icon">🌿</div>
+          <h3>Prevention &amp; Community</h3>
+          <p>Preventive dentistry, public health, and community oral health.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Community</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-cyan">
+          <div class="subject-icon">🩺</div>
+          <h3>Oral Medicine</h3>
+          <p>Diagnosis and medical management of oral mucosal conditions.</p>
+          <div class="subject-card-footer">
+            <span class="subject-tag">Medicine</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
+
+        <a href="./subjects.html" class="subject-card c-lime">
           <div class="subject-icon">🔍</div>
           <h3>Periodontology</h3>
-          <p>Periodontal diseases, classification, non-surgical and surgical treatment planning.</p>
+          <p>Gum disease management, scaling, and periodontal surgery.</p>
           <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="subject-tag">Perio</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
           </div>
         </a>
 
-        <a href="./subjects.html" class="subject-card orange">
-          <div class="subject-icon">⚕️</div>
-          <h3>Conservative Dentistry</h3>
-          <p>Caries management, restorative materials, and endodontic access preparations.</p>
+        <a href="./subjects.html" class="subject-card c-rose">
+          <div class="subject-icon">⚔️</div>
+          <h3>Oral Surgery</h3>
+          <p>Extractions, impactions, minor oral surgery, and biopsies.</p>
           <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <a href="./subjects.html" class="subject-card rose">
-          <div class="subject-icon">💊</div>
-          <h3>Pharmacology</h3>
-          <p>Dental pharmacology, analgesics, antibiotics, local anaesthetics, and drug interactions.</p>
-          <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <a href="./subjects.html" class="subject-card indigo">
-          <div class="subject-icon">🧬</div>
-          <h3>Pathology</h3>
-          <p>Oral pathological lesions, cysts, tumours, and histopathological interpretation.</p>
-          <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <a href="./subjects.html" class="subject-card cyan">
-          <div class="subject-icon">🧫</div>
-          <h3>Microbiology</h3>
-          <p>Oral microbiome, pathogenic bacteria, infection control, and sterilisation protocols.</p>
-          <div class="subject-card-footer">
-            <span class="subject-status available">Available</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="subject-tag">Surgery</span>
+            <svg class="subject-arrow" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
           </div>
         </a>
 
       </div>
     </section>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -225,22 +272,22 @@
       var name    = (profile && profile.full_name) ? profile.full_name : (user.email || 'Student');
       var initial = name.charAt(0).toUpperCase();
 
-      document.getElementById('studentName').textContent    = name;
-      document.getElementById('navAvatar').textContent      = initial;
-      document.getElementById('navName').textContent        = name.split(' ')[0];
-      document.getElementById('profileName').textContent    = name;
-      document.getElementById('profileAvatar').textContent  = initial;
-      document.getElementById('profileEmail').textContent   = (profile && profile.email)        || user.email || '—';
-      document.getElementById('profileUniv').textContent    = (profile && profile.university)   || '—';
-      document.getElementById('profileFaculty').textContent = (profile && profile.faculty)      || '—';
-      document.getElementById('profileYear').textContent    = (profile && profile.academic_year)|| 'Third Year';
-      document.getElementById('profileStudentId').textContent = (profile && profile.student_id) || '—';
+      document.getElementById('studentName').textContent      = name;
+      document.getElementById('navAvatar').textContent        = initial;
+      document.getElementById('navName').textContent          = name.split(' ')[0];
+      document.getElementById('profileName').textContent      = name;
+      document.getElementById('profileAvatar').textContent    = initial;
+      document.getElementById('profileEmail').textContent     = (profile && profile.email)         || user.email || '—';
+      document.getElementById('profileUniv').textContent      = (profile && profile.university)    || '—';
+      document.getElementById('profileFaculty').textContent   = (profile && profile.faculty)       || '—';
+      document.getElementById('profileYear').textContent      = (profile && profile.academic_year) || 'Third Year';
+      document.getElementById('profileStudentId').textContent = (profile && profile.student_id)    || '—';
 
       var month = new Date().getMonth() + 1;
       document.getElementById('currentSemester').textContent = (month >= 9 || month <= 1) ? 'S1' : 'S2';
 
       document.querySelectorAll('.subject-card').forEach(function(card, i) {
-        card.style.animationDelay = (i * 60) + 'ms';
+        card.style.animationDelay = (i * 55) + 'ms';
         card.classList.add('card-animate');
       });
 
