@@ -1,290 +1,333 @@
 // ============================================================
-// app.js — Authentication, routing, and UI logic
-// Depends on supabase.js being loaded first (see HTML files).
+// app.js — Auth, routing, admin detection, content loading
 // ============================================================
 
+const ADMIN_EMAIL = 'tahacabello3@gmail.com';
+
 // ── Helpers ──────────────────────────────────────────────────
-
-/** Show an alert banner inside a form. */
-function showAlert(containerId, message, type = "error") {
-  const el = document.getElementById(containerId);
+function showAlert(id, msg, type = 'error') {
+  var el = document.getElementById(id);
   if (!el) return;
-  el.textContent = message;
-  el.className = `alert alert-${type}`;
-  el.style.display = "block";
-  // Auto-hide success alerts after 4 s
-  if (type === "success") setTimeout(() => (el.style.display = "none"), 4000);
+  el.textContent = msg;
+  el.className = 'alert alert-' + type;
+  el.style.display = 'block';
+  if (type === 'success') setTimeout(function(){ el.style.display = 'none'; }, 4000);
 }
-
-/** Hide an alert banner. */
-function hideAlert(containerId) {
-  const el = document.getElementById(containerId);
-  if (el) el.style.display = "none";
+function hideAlert(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = 'none';
 }
-
-/** Simple email validator. */
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-/** Set a button to loading state and return a restore function. */
-function setLoading(btn, loadingText = "Please wait…") {
-  const original = btn.innerHTML;
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function setLoading(btn, text) {
+  var orig = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span>${loadingText}`;
-  return () => {
-    btn.disabled = false;
-    btn.innerHTML = original;
-  };
+  btn.innerHTML = '<span class="spinner"></span>' + text;
+  return function(){ btn.disabled = false; btn.innerHTML = orig; };
+}
+function isAdmin(user) {
+  return user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
-// ── Route guard: pages that require login ─────────────────────
-// Call this at the top of dashboard.html and subjects.html.
+// ── Route guards ──────────────────────────────────────────────
 async function requireAuth() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "./index.html";
-  }
-  return session;
+  var r = await _supabase.auth.getSession();
+  if (!r.data.session) { window.location.href = './index.html'; return null; }
+  return r.data.session;
 }
-
-// ── Route guard: pages that should redirect if already logged in ─
-// Call this at the top of index.html / signup.html.
 async function redirectIfLoggedIn() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (session) {
-    window.location.href = "./dashboard.html";
-  }
+  var r = await _supabase.auth.getSession();
+  if (r.data.session) window.location.href = './dashboard.html';
 }
 
 // ── Logout ────────────────────────────────────────────────────
 async function logout() {
   await _supabase.auth.signOut();
-  window.location.href = "./index.html";
+  window.location.href = './index.html';
 }
 
-// ── Fetch the current user's profile from the profiles table ──
+// ── Fetch profile ─────────────────────────────────────────────
 async function fetchProfile(userId) {
-  const { data, error } = await _supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
-  if (error) {
-    console.error("fetchProfile error:", error.message);
-    return null;
-  }
-  return data;
+  var r = await _supabase.from('profiles').select('*').eq('id', userId).single();
+  return r.error ? null : r.data;
 }
 
-// ─────────────────────────────────────────────────────────────
-// LOGIN FORM LOGIC (index.html)
-// ─────────────────────────────────────────────────────────────
+// ── Login ─────────────────────────────────────────────────────
 function initLoginPage() {
-  redirectIfLoggedIn(); // kick logged-in users straight to dashboard
-
-  const form = document.getElementById("loginForm");
+  redirectIfLoggedIn();
+  var form = document.getElementById('loginForm');
   if (!form) return;
-
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    hideAlert("loginAlert");
-
-    const email    = form.email.value.trim();
-    const password = form.password.value;
-    const btn      = form.querySelector("button[type='submit']");
-
-    // Basic validation
-    if (!email || !password) {
-      showAlert("loginAlert", "Please fill in all fields.");
-      return;
-    }
-    if (!isValidEmail(email)) {
-      showAlert("loginAlert", "Please enter a valid email address.");
-      return;
-    }
-
-    const restore = setLoading(btn, "Signing in…");
-
-    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-
+    hideAlert('loginAlert');
+    var email    = form.email.value.trim();
+    var password = form.password.value;
+    var btn      = form.querySelector('button[type="submit"]');
+    if (!email || !password) { showAlert('loginAlert', 'Please fill in all fields.'); return; }
+    if (!isValidEmail(email)) { showAlert('loginAlert', 'Please enter a valid email.'); return; }
+    var restore = setLoading(btn, 'Signing in…');
+    var r = await _supabase.auth.signInWithPassword({ email: email, password: password });
     restore();
-
-    if (error) {
-      // Provide friendly messages for common Supabase error codes
-      const msg =
-        error.message.includes("Invalid login")
-          ? "Incorrect email or password. Please try again."
-          : error.message.includes("Email not confirmed")
-          ? "Please confirm your email address first. Check your inbox."
-          : error.message;
-      showAlert("loginAlert", msg);
+    if (r.error) {
+      var msg = r.error.message.includes('Invalid login') ? 'Incorrect email or password.' : r.error.message;
+      showAlert('loginAlert', msg);
       return;
     }
-
-    // Success — redirect to dashboard
-    window.location.href = "./dashboard.html";
+    window.location.href = './dashboard.html';
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-// SIGN-UP FORM LOGIC (signup.html)
-// ─────────────────────────────────────────────────────────────
+// ── Sign up ───────────────────────────────────────────────────
 function initSignupPage() {
   redirectIfLoggedIn();
-
-  const form = document.getElementById("signupForm");
+  var form = document.getElementById('signupForm');
   if (!form) return;
-
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    hideAlert("signupAlert");
-
-    // Gather field values
-    const fullName   = form.full_name.value.trim();
-    const studentId  = form.student_id.value.trim();
-    const university = form.university.value.trim();
-    const faculty    = form.faculty.value.trim();
-    const email      = form.email.value.trim();
-    const password   = form.password.value;
-    const confirm    = form.confirm_password.value;
-    const btn        = form.querySelector("button[type='submit']");
-
-    // Validation
+    hideAlert('signupAlert');
+    var fullName   = form.full_name.value.trim();
+    var studentId  = form.student_id.value.trim();
+    var university = form.university.value.trim();
+    var faculty    = form.faculty.value.trim();
+    var email      = form.email.value.trim();
+    var password   = form.password.value;
+    var confirm    = form.confirm_password.value;
+    var btn        = form.querySelector('button[type="submit"]');
     if (!fullName || !studentId || !university || !faculty || !email || !password || !confirm) {
-      showAlert("signupAlert", "Please fill in all fields.");
-      return;
+      showAlert('signupAlert', 'Please fill in all fields.'); return;
     }
-    if (!isValidEmail(email)) {
-      showAlert("signupAlert", "Please enter a valid email address.");
-      return;
-    }
-    if (password.length < 6) {
-      showAlert("signupAlert", "Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      showAlert("signupAlert", "Passwords do not match.");
-      return;
-    }
-
-    const restore = setLoading(btn, "Creating account…");
-
-    // 1. Create auth user via Supabase Auth
-    const { data: authData, error: authError } = await _supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // Pass profile data as metadata so it's accessible in the session
-        data: { full_name: fullName }
-      }
-    });
-
-    if (authError) {
-      restore();
-      showAlert("signupAlert", authError.message);
-      return;
-    }
-
-    const userId = authData.user?.id;
-
+    if (!isValidEmail(email)) { showAlert('signupAlert', 'Please enter a valid email.'); return; }
+    if (password.length < 6)  { showAlert('signupAlert', 'Password must be at least 6 characters.'); return; }
+    if (password !== confirm)  { showAlert('signupAlert', 'Passwords do not match.'); return; }
+    var restore = setLoading(btn, 'Creating account…');
+    var r = await _supabase.auth.signUp({ email: email, password: password, options: { data: { full_name: fullName } } });
+    if (r.error) { restore(); showAlert('signupAlert', r.error.message); return; }
+    var userId = r.data.user && r.data.user.id;
     if (userId) {
-      // 2. Insert profile record linked to the auth user
-      const { error: profileError } = await _supabase.from("profiles").insert([
-        {
-          id:            userId,
-          full_name:     fullName,
-          student_id:    studentId,
-          university:    university,
-          faculty:       faculty,
-          academic_year: "Third Year",
-          email:         email,
-          created_at:    new Date().toISOString()
-        }
-      ]);
-
-      if (profileError) {
-        console.error("Profile insert error:", profileError.message);
-        // Auth user was created; profile failed — still show partial success
-        restore();
-        showAlert(
-          "signupAlert",
-          "Account created but profile could not be saved. Please contact support.",
-          "error"
-        );
-        return;
-      }
+      await _supabase.from('profiles').insert([{
+        id: userId, full_name: fullName, student_id: studentId,
+        university: university, faculty: faculty,
+        academic_year: 'Third Year', email: email, created_at: new Date().toISOString()
+      }]);
     }
-
     restore();
-
-    // Show success message; Supabase may require email confirmation
-    showAlert(
-      "signupAlert",
-      "✅ Account created! Please check your email to confirm your address, then log in.",
-      "success"
-    );
-
-    // Clear the form
+    showAlert('signupAlert', '✅ Account created! You can now sign in.', 'success');
     form.reset();
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-// DASHBOARD LOGIC (dashboard.html)
-// ─────────────────────────────────────────────────────────────
-async function initDashboardPage() {
-  const session = await requireAuth();
+// ── Subject page ──────────────────────────────────────────────
+async function initSubjectPage() {
+  var session = await requireAuth();
   if (!session) return;
 
-  const user    = session.user;
-  const profile = await fetchProfile(user.id);
+  var user    = session.user;
+  var profile = await fetchProfile(user.id);
+  var name    = (profile && profile.full_name) ? profile.full_name : user.email;
 
-  // Welcome message
-  const nameEl = document.getElementById("studentName");
-  if (nameEl) {
-    nameEl.textContent = profile?.full_name ?? user.email;
-  }
+  // Nav
+  var navAvatar = document.getElementById('navAvatar');
+  var navName   = document.getElementById('navName');
+  if (navAvatar) navAvatar.textContent = name.charAt(0).toUpperCase();
+  if (navName)   navName.textContent   = name.split(' ')[0];
 
-  // Populate profile card details
-  const fields = {
-    profileEmail:    profile?.email      ?? "—",
-    profileUniv:     profile?.university ?? "—",
-    profileFaculty:  profile?.faculty    ?? "—",
-    profileYear:     profile?.academic_year ?? "Third Year",
-    profileStudentId:profile?.student_id ?? "—"
-  };
-  for (const [id, value] of Object.entries(fields)) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  }
+  // Admin panel
+  var adminPanel = document.getElementById('adminPanel');
+  if (adminPanel) adminPanel.style.display = isAdmin(user) ? 'block' : 'none';
 
-  // Animate subject cards on load
-  const cards = document.querySelectorAll(".subject-card");
-  cards.forEach((card, i) => {
-    card.style.animationDelay = `${i * 60}ms`;
-    card.classList.add("card-animate");
+  // Logout
+  var logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+  // Get subject from URL
+  var params    = new URLSearchParams(window.location.search);
+  var subjectId = params.get('id') || 'unknown';
+
+  // Load content for both tabs
+  await loadContent(subjectId, 'previous_exams');
+  await loadContent(subjectId, 'midterm_quizzes');
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      var target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.add('active');
+    });
   });
 
-  // Logout button
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", logout);
+  // Admin form submit
+  var addForm = document.getElementById('addContentForm');
+  if (addForm && isAdmin(user)) {
+    addForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await handleAddContent(subjectId, user);
+    });
+  }
+
+  // Hide loading
+  var overlay = document.getElementById('loadingOverlay');
+  if (overlay) { overlay.classList.add('hidden'); setTimeout(function(){ overlay.remove(); }, 400); }
 }
 
-// ─────────────────────────────────────────────────────────────
-// SUBJECTS PAGE LOGIC (subjects.html)
-// ─────────────────────────────────────────────────────────────
-async function initSubjectsPage() {
-  const session = await requireAuth();
-  if (!session) return;
+// ── Load content from Supabase ────────────────────────────────
+async function loadContent(subjectId, section) {
+  var containerId = section === 'previous_exams' ? 'prevExamsContent' : 'midtermContent';
+  var container   = document.getElementById(containerId);
+  if (!container) return;
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.addEventListener("click", logout);
+  container.innerHTML = '<div class="content-loading">Loading…</div>';
 
-  // Animate subject rows
-  const rows = document.querySelectorAll(".subject-row");
-  rows.forEach((row, i) => {
-    row.style.animationDelay = `${i * 70}ms`;
-    row.classList.add("card-animate");
+  var r = await _supabase
+    .from('subject_content')
+    .select('*')
+    .eq('subject_id', subjectId)
+    .eq('section', section)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (r.error || !r.data || r.data.length === 0) {
+    container.innerHTML = '<div class="content-empty">📭 No content yet. Check back soon.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  r.data.forEach(function(item) {
+    container.appendChild(renderContentItem(item));
   });
+}
+
+// ── Render a single content item ──────────────────────────────
+function renderContentItem(item) {
+  var div = document.createElement('div');
+  div.className = 'content-item';
+  div.dataset.id = item.id;
+
+  var header = '<div class="content-item-header">' +
+    '<div class="content-item-title">' +
+    '<span class="content-type-badge type-' + item.type + '">' + item.type.toUpperCase() + '</span>' +
+    '<span>' + escHtml(item.title) + '</span>' +
+    '</div>' +
+    '<div class="content-item-date">' + new Date(item.created_at).toLocaleDateString('en-GB') + '</div>' +
+    '</div>';
+
+  var body = '';
+  if (item.type === 'text') {
+    body = '<div class="content-text">' + escHtml(item.content || '').replace(/\n/g, '<br>') + '</div>';
+  } else if (item.type === 'image') {
+    body = '<div class="content-image-wrap"><img src="' + item.file_url + '" alt="' + escHtml(item.title) + '" class="content-image" loading="lazy" /></div>';
+  } else if (item.type === 'pdf') {
+    body = '<a href="' + item.file_url + '" target="_blank" class="content-pdf-link">' +
+      '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+      escHtml(item.file_name || item.title) + ' — Open PDF' +
+      '</a>';
+  }
+
+  // Admin delete button
+  var adminBtn = '';
+  var session = null;
+  try {
+    // We'll add the delete button via JS after render if admin
+    adminBtn = '<button class="btn-delete-item" onclick="deleteContent(\'' + item.id + '\', \'' + item.subject_id + '\', \'' + item.section + '\')" title="Delete">✕</button>';
+  } catch(e){}
+
+  div.innerHTML = header + body;
+
+  // Add delete btn if admin (check via DOM — adminPanel visible means admin)
+  var adminPanel = document.getElementById('adminPanel');
+  if (adminPanel && adminPanel.style.display !== 'none') {
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn-delete-item';
+    delBtn.title = 'Delete';
+    delBtn.innerHTML = '✕';
+    delBtn.onclick = function(){ deleteContent(item.id, item.subject_id, item.section); };
+    div.querySelector('.content-item-header').appendChild(delBtn);
+  }
+
+  return div;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Delete content item ───────────────────────────────────────
+async function deleteContent(id, subjectId, section) {
+  if (!confirm('Delete this item?')) return;
+
+  // Get file_url to delete from storage if needed
+  var r = await _supabase.from('subject_content').select('file_url,type').eq('id', id).single();
+  if (!r.error && r.data && (r.data.type === 'image' || r.data.type === 'pdf') && r.data.file_url) {
+    // Extract path from URL
+    var url   = r.data.file_url;
+    var parts = url.split('/content-files/');
+    if (parts[1]) await _supabase.storage.from('content-files').remove([parts[1]]);
+  }
+
+  await _supabase.from('subject_content').delete().eq('id', id);
+  await loadContent(subjectId, section);
+}
+
+// ── Handle add content form ───────────────────────────────────
+async function handleAddContent(subjectId, user) {
+  var section  = document.getElementById('addSection').value;
+  var title    = document.getElementById('addTitle').value.trim();
+  var type     = document.getElementById('addType').value;
+  var textArea = document.getElementById('addText');
+  var fileInput= document.getElementById('addFile');
+  var btn      = document.querySelector('#addContentForm .btn-admin-submit');
+  var alertId  = 'adminAlert';
+
+  if (!title) { showAlert(alertId, 'Please enter a title.'); return; }
+  if (type === 'text' && (!textArea || !textArea.value.trim())) {
+    showAlert(alertId, 'Please enter the text content.'); return;
+  }
+  if ((type === 'image' || type === 'pdf') && (!fileInput || !fileInput.files[0])) {
+    showAlert(alertId, 'Please select a file.'); return;
+  }
+
+  var restore = setLoading(btn, 'Uploading…');
+  hideAlert(alertId);
+
+  var insertData = {
+    subject_id: subjectId,
+    section:    section,
+    title:      title,
+    type:       type,
+    created_by: user.id
+  };
+
+  if (type === 'text') {
+    insertData.content = textArea.value.trim();
+  } else {
+    var file      = fileInput.files[0];
+    var ext       = file.name.split('.').pop();
+    var filePath  = subjectId + '/' + section + '/' + Date.now() + '.' + ext;
+    var upResult  = await _supabase.storage.from('content-files').upload(filePath, file, { upsert: false });
+    if (upResult.error) { restore(); showAlert(alertId, 'Upload failed: ' + upResult.error.message); return; }
+    var urlResult = _supabase.storage.from('content-files').getPublicUrl(filePath);
+    insertData.file_url  = urlResult.data.publicUrl;
+    insertData.file_name = file.name;
+  }
+
+  var r = await _supabase.from('subject_content').insert([insertData]);
+  restore();
+
+  if (r.error) { showAlert(alertId, 'Error: ' + r.error.message); return; }
+
+  showAlert(alertId, '✅ Added successfully!', 'success');
+  document.getElementById('addContentForm').reset();
+  toggleTypeFields('text');
+  await loadContent(subjectId, section);
+}
+
+// ── Toggle form fields based on type ─────────────────────────
+function toggleTypeFields(type) {
+  var textWrap = document.getElementById('textWrap');
+  var fileWrap = document.getElementById('fileWrap');
+  if (textWrap) textWrap.style.display = type === 'text' ? 'block' : 'none';
+  if (fileWrap) fileWrap.style.display = (type === 'image' || type === 'pdf') ? 'block' : 'none';
+  var fileInput = document.getElementById('addFile');
+  if (fileInput) fileInput.accept = type === 'image' ? 'image/*' : '.pdf';
 }
