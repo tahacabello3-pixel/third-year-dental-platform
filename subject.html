@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subject — DentalEd Year 3</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    #loadingOverlay {
+      position: fixed; inset: 0; background: #0d0f14;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 9999; transition: opacity .35s ease;
+    }
+    #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+    .loading-tooth { font-size: 2.8rem; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.18)} }
+    .loading-text { font-size: .88rem; color: #4a5068; font-family: 'Inter',sans-serif; }
+    .loading-bar { width: 120px; height: 3px; background: #1a1e2a; border-radius: 99px; overflow: hidden; }
+    .loading-bar-fill { height: 100%; width: 40%; background: linear-gradient(90deg,#2563eb,#4f8ef7); border-radius: 99px; animation: slide 1.2s ease-in-out infinite; }
+    @keyframes slide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
+  </style>
+</head>
+<body>
+
+  <div id="loadingOverlay">
+    <div class="loading-tooth">🦷</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    <div class="loading-text">Loading subject…</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="./dashboard.html" class="nav-brand">
+        <div class="nav-brand-icon">🦷</div>
+        <span class="nav-brand-text">DentalEd</span>
+        <span class="nav-brand-badge">Year 3</span>
+      </a>
+      <div class="nav-links">
+        <a href="./dashboard.html" class="nav-link">Dashboard</a>
+        <a href="./subjects.html"  class="nav-link">Subjects</a>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">S</div>
+          <span id="navName">Student</span>
+        </div>
+        <button id="logoutBtn" class="btn-logout">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-wrapper">
+
+    <!-- Subject hero (filled by JS) -->
+    <div class="subject-hero" id="subjectHero">
+      <div class="subject-hero-icon" id="heroIcon" style="background:var(--accent-bg)">📚</div>
+      <div class="subject-hero-info">
+        <h1 id="heroTitle">Loading…</h1>
+        <p id="heroDesc">Third-Year Dental Medicine &amp; Oral Surgery</p>
+      </div>
+    </div>
+
+    <!-- Admin panel (only visible to admin) -->
+    <div class="admin-panel" id="adminPanel" style="display:none">
+      <div class="admin-panel-header">
+        <span class="admin-badge">Admin</span>
+        <h3>Add New Content</h3>
+      </div>
+
+      <div id="adminAlert" class="alert admin-alert"></div>
+
+      <form id="addContentForm" novalidate>
+        <div class="admin-form-grid">
+
+          <div class="admin-form-group">
+            <label for="addSection">Section</label>
+            <select id="addSection" name="section" required>
+              <option value="previous_exams">📝 Previous Exams</option>
+              <option value="midterm_quizzes">✏️ Midterm Quizzes</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group">
+            <label for="addType">Content Type</label>
+            <select id="addType" name="type" required onchange="toggleTypeFields(this.value)">
+              <option value="text">📄 Text</option>
+              <option value="image">🖼️ Image</option>
+              <option value="pdf">📎 PDF</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group" style="grid-column:1/-1">
+            <label for="addTitle">Title / Label</label>
+            <input type="text" id="addTitle" name="title" placeholder="e.g. Final Exam 2023 / Quiz 1" required />
+          </div>
+
+        </div>
+
+        <!-- Text area -->
+        <div id="textWrap" class="admin-form-group" style="margin-bottom:14px">
+          <label for="addText">Text Content</label>
+          <textarea id="addText" name="content" placeholder="Type or paste the question text here…"></textarea>
+        </div>
+
+        <!-- File input -->
+        <div id="fileWrap" class="admin-form-group" style="display:none;margin-bottom:14px">
+          <label for="addFile">Upload File</label>
+          <input type="file" id="addFile" name="file" accept="image/*" />
+        </div>
+
+        <button type="submit" class="btn-admin-submit">➕ Add Content</button>
+      </form>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-wrapper">
+      <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tab-prev">📝 Previous Exams</button>
+        <button class="tab-btn" data-tab="tab-mid">✏️ Midterm Quizzes</button>
+      </div>
+
+      <div id="tab-prev" class="tab-panel active">
+        <div id="prevExamsContent">
+          <div class="content-loading">Loading…</div>
+        </div>
+      </div>
+
+      <div id="tab-mid" class="tab-panel">
+        <div id="midtermContent">
+          <div class="content-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Lightbox for images -->
+  <div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'">
+    <img id="lightboxImg" src="" alt="Full size" />
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase.js"></script>
+  <script src="./app.js"></script>
+  <script>
+    // Subject metadata map
+    var SUBJECTS = {
+      'oral-pathology':     { name: 'Oral Pathology',                icon: '🔬', color: 'var(--red-bg)',    text: 'var(--red)'    },
+      'general-surgery':    { name: 'General Surgery',               icon: '🏥', color: 'var(--orange-bg)', text: 'var(--orange)' },
+      'general-medicine':   { name: 'General Medicine',              icon: '💊', color: 'var(--accent-bg)', text: 'var(--accent)' },
+      'conservative':       { name: 'Conservative Dentistry & Endo', icon: '🦷', color: 'var(--teal-bg)',   text: 'var(--teal)'   },
+      'pedodontics':        { name: 'Pedodontics',                   icon: '👶', color: 'var(--pink-bg)',   text: 'var(--pink)'   },
+      'orthodontics':       { name: 'Orthodontics',                  icon: '😁', color: 'var(--indigo-bg)', text: 'var(--indigo)' },
+      'prosthodontics':     { name: 'Prosthodontics — Removable',    icon: '🦴', color: 'var(--purple-bg)', text: 'var(--purple)' },
+      'crown-bridge':       { name: 'Crown & Bridge — Fixed',        icon: '👑', color: 'var(--amber-bg)',  text: 'var(--amber)'  },
+      'prevention':         { name: 'Prevention & Community',        icon: '🌿', color: 'var(--green-bg)',  text: 'var(--green)'  },
+      'oral-medicine':      { name: 'Oral Medicine',                 icon: '🩺', color: 'var(--cyan-bg)',   text: 'var(--cyan)'   },
+      'periodontology':     { name: 'Periodontology',                icon: '🔍', color: 'var(--lime-bg)',   text: 'var(--lime)'   },
+      'oral-surgery':       { name: 'Oral Surgery',                  icon: '⚔️', color: 'var(--rose-bg)',   text: 'var(--rose)'   }
+    };
+
+    // Set page title/icon based on subject ID
+    var params = new URLSearchParams(window.location.search);
+    var sid    = params.get('id') || 'unknown';
+    var meta   = SUBJECTS[sid] || { name: 'Subject', icon: '📚', color: 'var(--accent-bg)', text: 'var(--accent)' };
+
+    document.title = meta.name + ' — DentalEd Year 3';
+    document.getElementById('heroTitle').textContent = meta.name;
+    var iconEl = document.getElementById('heroIcon');
+    iconEl.textContent = meta.icon;
+    iconEl.style.background = meta.color;
+    iconEl.style.color = meta.text;
+
+    // Image lightbox handler
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('content-image')) {
+        var lb = document.getElementById('lightbox');
+        document.getElementById('lightboxImg').src = e.target.src;
+        lb.style.display = 'flex';
+      }
+    });
+
+    // Init page
+    initSubjectPage();
+  </script>
+</body>
+</html>
