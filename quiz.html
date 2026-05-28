@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz — DentalEd Year 3</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    #loadingOverlay {
+      position:fixed;inset:0;background:#0d0f14;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:16px;z-index:9999;transition:opacity .35s ease;
+    }
+    #loadingOverlay.hidden{opacity:0;pointer-events:none;}
+    .loading-tooth{font-size:2.8rem;animation:pulse 1.2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+    .loading-text{font-size:.88rem;color:#4a5068;font-family:'Inter',sans-serif;}
+    .loading-bar{width:120px;height:3px;background:#1a1e2a;border-radius:99px;overflow:hidden;}
+    .loading-bar-fill{height:100%;width:40%;background:linear-gradient(90deg,#2563eb,#4f8ef7);border-radius:99px;animation:slide 1.2s ease-in-out infinite;}
+    @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+    /* Quiz layout */
+    .quiz-header {
+      background: linear-gradient(135deg,#0f1829,#111e35);
+      border: 1px solid rgba(79,142,247,.2);
+      border-radius: var(--r-xl);
+      padding: 28px 36px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .quiz-header-left h1 {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--text-primary); margin-bottom: 4px;
+    }
+    .quiz-header-left p { color: var(--text-secondary); font-size: .88rem; }
+    .quiz-progress-box {
+      background: var(--accent-bg);
+      border: 1px solid rgba(79,142,247,.2);
+      border-radius: var(--r-md);
+      padding: 12px 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .quiz-progress-num {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--accent);
+    }
+    .quiz-progress-label { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Progress bar */
+    .quiz-bar-wrap { height: 4px; background: var(--border); border-radius: 99px; margin-bottom: 28px; }
+    .quiz-bar-fill { height: 100%; background: linear-gradient(90deg,var(--accent-dark),var(--accent)); border-radius: 99px; transition: width .4s ease; }
+
+    /* Question card */
+    .question-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 28px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .question-card.active { display: block; }
+
+    .question-num {
+      font-size: .75rem; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .07em;
+      margin-bottom: 10px;
+    }
+    .question-type-badge {
+      display: inline-block;
+      font-size: .68rem; font-weight: 700;
+      padding: 2px 9px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: .05em;
+      margin-left: 8px;
+    }
+    .badge-mcq     { background: var(--accent-bg); color: var(--accent); }
+    .badge-tf      { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-written { background: var(--purple-bg); color: var(--purple); }
+
+    .question-text {
+      font-size: 1.05rem; font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    /* MCQ options */
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-btn {
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 13px 18px;
+      text-align: left;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: .92rem;
+      color: var(--text-primary);
+      display: flex; align-items: center; gap: 12px;
+      transition: border-color .2s, background .2s;
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-bg); }
+    .option-btn:disabled { cursor: default; }
+    .option-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
+    .option-btn.correct  { border-color: var(--green) !important; background: var(--green-bg) !important; color: var(--green); }
+    .option-btn.wrong    { border-color: var(--red)   !important; background: var(--red-bg)   !important; color: var(--red); }
+
+    .option-letter {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700;
+      flex-shrink: 0;
+      transition: background .2s, color .2s;
+    }
+    .option-btn.selected .option-letter { background: var(--accent); color: #fff; }
+    .option-btn.correct  .option-letter { background: var(--green); color: #fff; }
+    .option-btn.wrong    .option-letter { background: var(--red); color: #fff; }
+
+    /* T/F buttons */
+    .tf-options { display: flex; gap: 12px; }
+    .tf-btn {
+      flex: 1; padding: 14px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 1rem; font-weight: 700;
+      color: var(--text-primary);
+      transition: all .2s;
+      text-align: center;
+    }
+    .tf-btn:hover:not(:disabled) { border-color: var(--yellow); background: var(--yellow-bg); }
+    .tf-btn:disabled { cursor: default; }
+    .tf-btn.selected { border-color: var(--yellow); background: var(--yellow-bg); color: var(--yellow); }
+    .tf-btn.correct  { border-color: var(--green) !important; background: var(--green-bg) !important; color: var(--green); }
+    .tf-btn.wrong    { border-color: var(--red)   !important; background: var(--red-bg)   !important; color: var(--red); }
+
+    /* Written answer */
+    .written-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color .2s;
+      line-height: 1.6;
+    }
+    .written-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-bg); }
+    .written-input:disabled { opacity: .7; cursor: default; }
+
+    /* Feedback after answer */
+    .feedback-box {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: var(--r-sm);
+      font-size: .88rem;
+      line-height: 1.6;
+    }
+    .feedback-box.show { display: block; }
+    .feedback-correct { background: var(--green-bg); border: 1px solid rgba(34,197,94,.2); color: var(--green); }
+    .feedback-wrong   { background: var(--red-bg);   border: 1px solid rgba(248,113,113,.2); color: var(--red); }
+    .feedback-written { background: var(--purple-bg);border: 1px solid rgba(167,139,250,.2); color: var(--purple); }
+    .feedback-answer  { margin-top: 6px; color: var(--text-primary); font-weight: 600; }
+
+    /* Nav buttons */
+    .quiz-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      gap: 12px;
+    }
+    .btn-quiz-nav {
+      padding: 11px 24px;
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: .92rem; font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      border: 1.5px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+    .btn-quiz-nav:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text-primary); }
+    .btn-quiz-nav:disabled { opacity: .3; cursor: default; }
+    .btn-quiz-submit {
+      padding: 11px 28px;
+      background: linear-gradient(135deg,var(--accent-dark),var(--accent));
+      color: #fff; border: none;
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: .95rem; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(79,142,247,.3);
+      transition: all .2s;
+    }
+    .btn-quiz-submit:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-answer {
+      padding: 10px 20px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1.5px solid rgba(79,142,247,.3);
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: .88rem; font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-answer:hover { background: var(--accent); color: #fff; }
+
+    /* Results screen */
+    #resultsScreen { display: none; }
+    .results-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .results-emoji { font-size: 3.5rem; margin-bottom: 16px; }
+    .results-score {
+      font-family: var(--font-display);
+      font-size: 3rem; font-weight: 700;
+      color: var(--accent);
+      line-height: 1; margin-bottom: 8px;
+    }
+    .results-label { color: var(--text-secondary); font-size: .95rem; margin-bottom: 28px; }
+    .results-stats {
+      display: flex; gap: 16px; justify-content: center;
+      margin-bottom: 32px;
+    }
+    .results-stat {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 20px;
+      flex: 1;
+    }
+    .results-stat-num { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; }
+    .results-stat-num.correct-num { color: var(--green); }
+    .results-stat-num.wrong-num   { color: var(--red); }
+    .results-stat-num.written-num { color: var(--purple); }
+    .results-stat-label { font-size: .75rem; color: var(--text-muted); margin-top: 4px; }
+    .btn-retake {
+      padding: 12px 28px;
+      background: linear-gradient(135deg,var(--accent-dark),var(--accent));
+      color: #fff; border: none;
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: .95rem; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(79,142,247,.3);
+      transition: all .2s;
+      margin-right: 10px;
+    }
+    .btn-retake:hover { opacity: .9; }
+    .btn-back-subject {
+      padding: 12px 24px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: .92rem; font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-back-subject:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+    /* Empty state */
+    .quiz-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .quiz-empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .quiz-empty h3 { color: var(--text-secondary); margin-bottom: 8px; font-size: 1.1rem; }
+
+    /* Admin add question */
+    .admin-quiz-panel {
+      background: linear-gradient(135deg,#0f1a10,#111e13);
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: var(--r-lg);
+      padding: 24px 28px;
+      margin-bottom: 28px;
+    }
+    .admin-quiz-panel .admin-panel-header { display:flex;align-items:center;gap:10px;margin-bottom:20px; }
+    .admin-quiz-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px; }
+    @media(max-width:640px){.admin-quiz-grid{grid-template-columns:1fr;}}
+    .full-width { grid-column: 1/-1; }
+    .admin-form-group { display:flex;flex-direction:column;gap:6px; }
+    .admin-form-group label { font-size:.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em; }
+    .admin-form-group input,
+    .admin-form-group select,
+    .admin-form-group textarea {
+      background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--r-sm);
+      color:var(--text-primary);font-family:var(--font-body);font-size:.9rem;padding:9px 12px;
+      outline:none;transition:border-color .2s;
+    }
+    .admin-form-group input:focus,
+    .admin-form-group select:focus,
+    .admin-form-group textarea:focus { border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.12); }
+    .admin-form-group textarea { resize:vertical;min-height:80px;line-height:1.6; }
+    .mcq-fields,.tf-fields,.written-fields { display:none; }
+    .mcq-fields.show,.tf-fields.show,.written-fields.show { display:contents; }
+  </style>
+</head>
+<body>
+
+  <div id="loadingOverlay">
+    <div class="loading-tooth">🦷</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    <div class="loading-text">Loading quiz…</div>
+  </div>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="./dashboard.html" class="nav-brand">
+        <div class="nav-brand-icon">🦷</div>
+        <span class="nav-brand-text">DentalEd</span>
+        <span class="nav-brand-badge">Year 3</span>
+      </a>
+      <div class="nav-links">
+        <a href="./dashboard.html" class="nav-link">Dashboard</a>
+        <a href="./subjects.html" class="nav-link">Subjects</a>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">S</div>
+          <span id="navName">Student</span>
+        </div>
+        <button id="logoutBtn" class="btn-logout">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-wrapper">
+
+    <!-- Quiz header -->
+    <div class="quiz-header">
+      <div class="quiz-header-left">
+        <h1 id="quizTitle">Quiz</h1>
+        <p id="quizSubtitle">Loading questions…</p>
+      </div>
+      <div class="quiz-progress-box">
+        <div class="quiz-progress-num" id="progressNum">0/0</div>
+        <div class="quiz-progress-label">Questions</div>
+      </div>
+    </div>
+
+    <!-- Admin panel -->
+    <div class="admin-quiz-panel" id="adminQuizPanel" style="display:none">
+      <div class="admin-panel-header">
+        <span class="admin-badge">Admin</span>
+        <h3>Add Question</h3>
+      </div>
+
+      <div id="adminQuizAlert" class="alert" style="margin-bottom:14px"></div>
+
+      <form id="addQuestionForm" novalidate>
+        <div class="admin-quiz-grid">
+
+          <div class="admin-form-group">
+            <label>Section</label>
+            <select id="qSection">
+              <option value="previous_exams">📝 Previous Exams</option>
+              <option value="midterm_quizzes">✏️ Midterm Quizzes</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group">
+            <label>Question Type</label>
+            <select id="qType" onchange="onQTypeChange(this.value)">
+              <option value="mcq">MCQ — 4 choices</option>
+              <option value="tf">True / False</option>
+              <option value="written">Written answer</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group full-width">
+            <label>Question Text</label>
+            <textarea id="qText" placeholder="Type the question here…" required></textarea>
+          </div>
+
+          <!-- MCQ fields -->
+          <div class="admin-form-group mcq-fields show" id="mcqFields">
+            <label>Option A</label>
+            <input type="text" id="qOptA" placeholder="Option A" />
+          </div>
+          <div class="admin-form-group mcq-fields show" id="mcqFieldsB">
+            <label>Option B</label>
+            <input type="text" id="qOptB" placeholder="Option B" />
+          </div>
+          <div class="admin-form-group mcq-fields show" id="mcqFieldsC">
+            <label>Option C</label>
+            <input type="text" id="qOptC" placeholder="Option C" />
+          </div>
+          <div class="admin-form-group mcq-fields show" id="mcqFieldsD">
+            <label>Option D</label>
+            <input type="text" id="qOptD" placeholder="Option D" />
+          </div>
+
+          <!-- Correct answer -->
+          <div class="admin-form-group full-width">
+            <label>Correct Answer</label>
+            <select id="qCorrect">
+              <option value="a">A</option>
+              <option value="b">B</option>
+              <option value="c">C</option>
+              <option value="d">D</option>
+            </select>
+          </div>
+
+          <!-- Explanation -->
+          <div class="admin-form-group full-width">
+            <label>Explanation (optional — shown after answering)</label>
+            <textarea id="qExplanation" placeholder="Why is this the correct answer?"></textarea>
+          </div>
+
+        </div>
+
+        <button type="submit" class="btn-admin-submit">➕ Add Question</button>
+      </form>
+    </div>
+
+    <!-- Quiz screen -->
+    <div id="quizScreen">
+      <div class="quiz-bar-wrap">
+        <div class="quiz-bar-fill" id="quizBarFill" style="width:0%"></div>
+      </div>
+
+      <div id="questionsContainer"></div>
+
+      <div class="quiz-nav">
+        <button class="btn-quiz-nav" id="btnPrev" onclick="goQuestion(-1)" disabled>← Previous</button>
+        <button class="btn-answer" id="btnAnswer" onclick="checkAnswer()" style="display:none">Check Answer</button>
+        <button class="btn-quiz-nav" id="btnNext" onclick="goQuestion(1)" disabled>Next →</button>
+      </div>
+
+      <div style="text-align:center;margin-top:24px">
+        <button class="btn-quiz-submit" id="btnSubmit" onclick="submitQuiz()" style="display:none">
+          🏁 Submit Quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- Results screen -->
+    <div id="resultsScreen">
+      <div class="results-card">
+        <div class="results-emoji" id="resultsEmoji">🎉</div>
+        <div class="results-score" id="resultsScore">—</div>
+        <div class="results-label" id="resultsLabel">Quiz Complete</div>
+        <div class="results-stats">
+          <div class="results-stat">
+            <div class="results-stat-num correct-num" id="correctCount">0</div>
+            <div class="results-stat-label">Correct</div>
+          </div>
+          <div class="results-stat">
+            <div class="results-stat-num wrong-num" id="wrongCount">0</div>
+            <div class="results-stat-label">Wrong</div>
+          </div>
+          <div class="results-stat">
+            <div class="results-stat-num written-num" id="writtenCount">0</div>
+            <div class="results-stat-label">Written</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn-retake" onclick="retakeQuiz()">🔄 Retake</button>
+          <button class="btn-back-subject" id="btnBackSubject">← Back to Subject</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase.js"></script>
+  <script src="./app.js"></script>
+  <script>
+    // ── State ─────────────────────────────────────────────────
+    var questions   = [];
+    var current     = 0;
+    var answers     = {};   // { index: {answered, correct} }
+    var subjectId   = '';
+    var sectionId   = '';
+    var currentUser = null;
+
+    var SUBJECT_NAMES = {
+      'oral-pathology':'Oral Pathology','general-surgery':'General Surgery',
+      'general-medicine':'General Medicine','conservative':'Conservative Dentistry',
+      'pedodontics':'Pedodontics','orthodontics':'Orthodontics',
+      'prosthodontics':'Prosthodontics','crown-bridge':'Crown & Bridge',
+      'prevention':'Prevention & Community','oral-medicine':'Oral Medicine',
+      'periodontology':'Periodontology','oral-surgery':'Oral Surgery'
+    };
+
+    // ── Init ──────────────────────────────────────────────────
+    (async function() {
+      var session = await requireAuth();
+      if (!session) return;
+
+      currentUser = session.user;
+      var profile = await fetchProfile(currentUser.id);
+      var name = (profile && profile.full_name) ? profile.full_name : currentUser.email;
+      document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('navName').textContent   = name.split(' ')[0];
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Get URL params
+      var params = new URLSearchParams(window.location.search);
+      subjectId  = params.get('subject') || '';
+      sectionId  = params.get('section') || 'previous_exams';
+
+      var subjectName  = SUBJECT_NAMES[subjectId] || subjectId;
+      var sectionLabel = sectionId === 'previous_exams' ? '📝 Previous Exams' : '✏️ Midterm Quizzes';
+
+      document.title = subjectName + ' Quiz — DentalEd Year 3';
+      document.getElementById('quizTitle').textContent    = subjectName;
+      document.getElementById('quizSubtitle').textContent = sectionLabel;
+
+      // Back button
+      document.getElementById('btnBackSubject').onclick = function() {
+        window.location.href = './subject.html?id=' + subjectId;
+      };
+
+      // Admin panel
+      if (isAdmin(currentUser)) {
+        document.getElementById('adminQuizPanel').style.display = 'block';
+        document.getElementById('addQuestionForm').addEventListener('submit', handleAddQuestion);
+        onQTypeChange('mcq');
+      }
+
+      // Load questions
+      await loadQuestions();
+
+      // Hide overlay
+      var overlay = document.getElementById('loadingOverlay');
+      overlay.classList.add('hidden');
+      setTimeout(function(){ overlay.remove(); }, 400);
+    })();
+
+    // ── Load questions ────────────────────────────────────────
+    async function loadQuestions() {
+      var r = await _supabase
+        .from('questions')
+        .select('*')
+        .eq('subject_id', subjectId)
+        .eq('section', sectionId)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      questions = (r.data && !r.error) ? r.data : [];
+      answers   = {};
+      current   = 0;
+      renderQuestions();
+    }
+
+    // ── Render all question cards ─────────────────────────────
+    function renderQuestions() {
+      var container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      if (questions.length === 0) {
+        container.innerHTML =
+          '<div class="quiz-empty">' +
+          '<div class="quiz-empty-icon">📭</div>' +
+          '<h3>No questions yet</h3>' +
+          '<p style="color:var(--text-muted);font-size:.88rem">Check back soon!</p>' +
+          '</div>';
+        document.getElementById('btnPrev').style.display   = 'none';
+        document.getElementById('btnNext').style.display   = 'none';
+        document.getElementById('btnAnswer').style.display = 'none';
+        document.getElementById('btnSubmit').style.display = 'none';
+        document.getElementById('progressNum').textContent = '0/0';
+        document.getElementById('quizBarFill').style.width = '0%';
+        return;
+      }
+
+      questions.forEach(function(q, i) {
+        var card = buildQuestionCard(q, i);
+        container.appendChild(card);
+      });
+
+      document.getElementById('progressNum').textContent = questions.length + ' Questions';
+      showQuestion(0);
+    }
+
+    // ── Build a question card ─────────────────────────────────
+    function buildQuestionCard(q, index) {
+      var div = document.createElement('div');
+      div.className = 'question-card' + (index === 0 ? ' active' : '');
+      div.id = 'qcard-' + index;
+
+      var typeBadge = q.type === 'mcq' ? '<span class="question-type-badge badge-mcq">MCQ</span>'
+                    : q.type === 'tf'  ? '<span class="question-type-badge badge-tf">T / F</span>'
+                    :                    '<span class="question-type-badge badge-written">Written</span>';
+
+      var body = '';
+
+      if (q.type === 'mcq') {
+        body = '<div class="options-list">' +
+          makeOption(index,'a',q.option_a) +
+          makeOption(index,'b',q.option_b) +
+          makeOption(index,'c',q.option_c) +
+          makeOption(index,'d',q.option_d) +
+        '</div>';
+      } else if (q.type === 'tf') {
+        body = '<div class="tf-options">' +
+          '<button class="tf-btn" id="tf-true-'+index+'" onclick="selectTF('+index+',\'true\')">✅ True</button>' +
+          '<button class="tf-btn" id="tf-false-'+index+'" onclick="selectTF('+index+',\'false\')">❌ False</button>' +
+        '</div>';
+      } else {
+        body = '<textarea class="written-input" id="written-'+index+'" placeholder="Write your answer here…" rows="4"></textarea>';
+      }
+
+      // Admin delete button
+      var adminDel = isAdmin(currentUser)
+        ? '<button onclick="deleteQuestion(\''+q.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.8rem;padding:4px 8px;border-radius:6px;float:right" title="Delete question">✕</button>'
+        : '';
+
+      div.innerHTML =
+        '<div class="question-num">Question ' + (index+1) + ' of ' + questions.length + typeBadge + adminDel + '</div>' +
+        '<div class="question-text">' + escQ(q.question) + '</div>' +
+        body +
+        '<div class="feedback-box" id="feedback-'+index+'"></div>';
+
+      return div;
+    }
+
+    function makeOption(index, letter, text) {
+      if (!text) return '';
+      return '<button class="option-btn" id="opt-'+index+'-'+letter+'" onclick="selectMCQ('+index+',\''+letter+'\')">' +
+        '<span class="option-letter">' + letter.toUpperCase() + '</span>' +
+        '<span>' + escQ(text) + '</span>' +
+      '</button>';
+    }
+
+    function escQ(str) {
+      return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Navigation ────────────────────────────────────────────
+    function showQuestion(index) {
+      document.querySelectorAll('.question-card').forEach(function(c){ c.classList.remove('active'); });
+      var card = document.getElementById('qcard-' + index);
+      if (card) card.classList.add('active');
+      current = index;
+
+      var pct = questions.length > 1 ? ((index / (questions.length-1)) * 100) : 100;
+      document.getElementById('quizBarFill').style.width = pct + '%';
+      document.getElementById('btnPrev').disabled = index === 0;
+
+      var ans = answers[index];
+      var isLast = index === questions.length - 1;
+
+      // Show/hide buttons based on state
+      if (ans && ans.answered) {
+        document.getElementById('btnAnswer').style.display = 'none';
+        document.getElementById('btnNext').disabled = isLast;
+        document.getElementById('btnNext').style.display = isLast ? 'none' : 'block';
+        document.getElementById('btnSubmit').style.display = isLast ? 'block' : 'none';
+      } else {
+        document.getElementById('btnAnswer').style.display = 'block';
+        document.getElementById('btnNext').style.display = 'none';
+        document.getElementById('btnSubmit').style.display = 'none';
+      }
+    }
+
+    function goQuestion(dir) {
+      var next = current + dir;
+      if (next >= 0 && next < questions.length) showQuestion(next);
+    }
+
+    // ── Answer selection ──────────────────────────────────────
+    var selectedAnswers = {}; // { index: value }
+
+    function selectMCQ(index, letter) {
+      if (answers[index] && answers[index].answered) return;
+      selectedAnswers[index] = letter;
+      ['a','b','c','d'].forEach(function(l) {
+        var btn = document.getElementById('opt-'+index+'-'+l);
+        if (btn) btn.classList.toggle('selected', l === letter);
+      });
+    }
+
+    function selectTF(index, val) {
+      if (answers[index] && answers[index].answered) return;
+      selectedAnswers[index] = val;
+      document.getElementById('tf-true-'+index).classList.toggle('selected', val === 'true');
+      document.getElementById('tf-false-'+index).classList.toggle('selected', val === 'false');
+    }
+
+    // ── Check answer ──────────────────────────────────────────
+    function checkAnswer() {
+      var q   = questions[current];
+      var sel = selectedAnswers[current];
+      var fb  = document.getElementById('feedback-' + current);
+
+      if (q.type === 'written') {
+        var written = document.getElementById('written-' + current);
+        if (!written || !written.value.trim()) {
+          fb.className = 'feedback-box show feedback-written';
+          fb.innerHTML = '✏️ Please write your answer first.';
+          return;
+        }
+        written.disabled = true;
+        answers[current] = { answered: true, correct: null }; // written = no auto score
+        fb.className = 'feedback-box show feedback-written';
+        fb.innerHTML = '📖 <strong>Model Answer:</strong>' +
+          '<div class="feedback-answer">' + escQ(q.correct) + '</div>' +
+          (q.explanation ? '<div style="margin-top:8px;opacity:.8">' + escQ(q.explanation) + '</div>' : '');
+      } else {
+        if (!sel) {
+          fb.className = 'feedback-box show feedback-wrong';
+          fb.innerHTML = '⚠️ Please select an answer first.';
+          return;
+        }
+        var isCorrect = sel.toLowerCase() === q.correct.toLowerCase();
+        answers[current] = { answered: true, correct: isCorrect };
+
+        // Style buttons
+        if (q.type === 'mcq') {
+          ['a','b','c','d'].forEach(function(l) {
+            var btn = document.getElementById('opt-'+current+'-'+l);
+            if (!btn) return;
+            btn.disabled = true;
+            if (l === q.correct.toLowerCase()) btn.classList.add('correct');
+            else if (l === sel && !isCorrect)  btn.classList.add('wrong');
+          });
+        } else {
+          var trueBtn  = document.getElementById('tf-true-'+current);
+          var falseBtn = document.getElementById('tf-false-'+current);
+          if (trueBtn)  { trueBtn.disabled  = true; if (q.correct==='true')  trueBtn.classList.add('correct'); else if (sel==='true')  trueBtn.classList.add('wrong'); }
+          if (falseBtn) { falseBtn.disabled = true; if (q.correct==='false') falseBtn.classList.add('correct');else if (sel==='false') falseBtn.classList.add('wrong'); }
+        }
+
+        fb.className = 'feedback-box show ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
+        fb.innerHTML = isCorrect
+          ? '✅ Correct!' + (q.explanation ? '<div style="margin-top:6px;opacity:.85">' + escQ(q.explanation) + '</div>' : '')
+          : '❌ Wrong. Correct answer: <strong>' + q.correct.toUpperCase() + '</strong>' +
+            (q.explanation ? '<div style="margin-top:6px;opacity:.85">' + escQ(q.explanation) + '</div>' : '');
+      }
+
+      // Update nav buttons
+      document.getElementById('btnAnswer').style.display = 'none';
+      var isLast = current === questions.length - 1;
+      document.getElementById('btnNext').disabled = isLast;
+      document.getElementById('btnNext').style.display = isLast ? 'none' : 'block';
+      document.getElementById('btnSubmit').style.display = isLast ? 'block' : 'none';
+    }
+
+    // ── Submit quiz ───────────────────────────────────────────
+    async function submitQuiz() {
+      var correct = 0, wrong = 0, written = 0;
+      questions.forEach(function(q, i) {
+        var ans = answers[i];
+        if (!ans) return;
+        if (q.type === 'written') written++;
+        else if (ans.correct) correct++;
+        else wrong++;
+      });
+
+      var autoTotal = questions.filter(function(q){ return q.type !== 'written'; }).length;
+      var pct = autoTotal > 0 ? Math.round((correct / autoTotal) * 100) : null;
+
+      // Save attempt
+      await _supabase.from('quiz_attempts').insert([{
+        student_id: currentUser.id,
+        subject_id: subjectId,
+        section:    sectionId,
+        score:      correct,
+        total:      autoTotal
+      }]);
+
+      // Show results
+      document.getElementById('quizScreen').style.display   = 'none';
+      document.getElementById('adminQuizPanel').style.display = 'none';
+      document.getElementById('resultsScreen').style.display = 'block';
+
+      var emoji = pct === null ? '✏️' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+      document.getElementById('resultsEmoji').textContent  = emoji;
+      document.getElementById('resultsScore').textContent  = pct !== null ? pct + '%' : '—';
+      document.getElementById('resultsLabel').textContent  = pct !== null ? correct + ' correct out of ' + autoTotal + ' auto-graded questions' : 'Written-only quiz — self-review your answers';
+      document.getElementById('correctCount').textContent  = correct;
+      document.getElementById('wrongCount').textContent    = wrong;
+      document.getElementById('writtenCount').textContent  = written;
+    }
+
+    // ── Retake ────────────────────────────────────────────────
+    function retakeQuiz() {
+      document.getElementById('resultsScreen').style.display = 'none';
+      document.getElementById('quizScreen').style.display   = 'block';
+      if (isAdmin(currentUser)) document.getElementById('adminQuizPanel').style.display = 'block';
+      selectedAnswers = {};
+      answers = {};
+      renderQuestions();
+    }
+
+    // ── Delete question (admin) ───────────────────────────────
+    async function deleteQuestion(id) {
+      if (!confirm('Delete this question?')) return;
+      await _supabase.from('questions').delete().eq('id', id);
+      await loadQuestions();
+    }
+
+    // ── Add question form ─────────────────────────────────────
+    function onQTypeChange(type) {
+      document.getElementById('qType').value = type;
+      // MCQ fields
+      var mcqEls = document.querySelectorAll('.mcq-fields');
+      mcqEls.forEach(function(el){ el.style.display = type==='mcq' ? 'flex' : 'none'; el.style.flexDirection='column'; el.style.gap='6px'; });
+
+      // Correct answer options
+      var qCorrect = document.getElementById('qCorrect');
+      qCorrect.innerHTML = '';
+      if (type === 'mcq') {
+        ['a','b','c','d'].forEach(function(l){
+          var o = document.createElement('option');
+          o.value = l; o.textContent = l.toUpperCase();
+          qCorrect.appendChild(o);
+        });
+        qCorrect.closest('.admin-form-group').style.display = 'flex';
+      } else if (type === 'tf') {
+        ['true','false'].forEach(function(v){
+          var o = document.createElement('option');
+          o.value = v; o.textContent = v === 'true' ? 'True' : 'False';
+          qCorrect.appendChild(o);
+        });
+        qCorrect.closest('.admin-form-group').style.display = 'flex';
+      } else {
+        // written — correct = model answer text
+        qCorrect.closest('.admin-form-group').style.display = 'none';
+        // replace correct select with textarea for written
+      }
+
+      // For written: show model answer textarea
+      var modelWrap = document.getElementById('modelAnswerWrap');
+      if (!modelWrap) {
+        modelWrap = document.createElement('div');
+        modelWrap.id = 'modelAnswerWrap';
+        modelWrap.className = 'admin-form-group full-width';
+        modelWrap.innerHTML = '<label>Model Answer (shown after student writes)</label><textarea id="qModelAnswer" placeholder="Type the model answer…" style="min-height:80px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-primary);font-family:var(--font-body);font-size:.9rem;padding:9px 12px;resize:vertical;outline:none;"></textarea>';
+        document.getElementById('qCorrect').closest('.admin-form-group').after(modelWrap);
+      }
+      modelWrap.style.display = type === 'written' ? 'flex' : 'none';
+      modelWrap.style.flexDirection = 'column';
+      modelWrap.style.gap = '6px';
+    }
+
+    async function handleAddQuestion(e) {
+      e.preventDefault();
+      var type     = document.getElementById('qType').value;
+      var section  = document.getElementById('qSection').value;
+      var text     = document.getElementById('qText').value.trim();
+      var expl     = document.getElementById('qExplanation').value.trim();
+      var btn      = document.querySelector('#addQuestionForm .btn-admin-submit');
+      var alertId  = 'adminQuizAlert';
+
+      if (!text) { showAlert(alertId,'Please enter the question text.'); return; }
+
+      var correct = '';
+      var data = {
+        subject_id: subjectId, section: section,
+        type: type, question: text, explanation: expl || null,
+        created_by: currentUser.id
+      };
+
+      if (type === 'mcq') {
+        var a = document.getElementById('qOptA').value.trim();
+        var b = document.getElementById('qOptB').value.trim();
+        var c = document.getElementById('qOptC').value.trim();
+        var d = document.getElementById('qOptD').value.trim();
+        if (!a||!b||!c||!d) { showAlert(alertId,'Please fill all 4 options.'); return; }
+        correct = document.getElementById('qCorrect').value;
+        data.option_a=a; data.option_b=b; data.option_c=c; data.option_d=d;
+        data.correct = correct;
+      } else if (type === 'tf') {
+        correct = document.getElementById('qCorrect').value;
+        data.correct = correct;
+      } else {
+        var model = document.getElementById('qModelAnswer') ? document.getElementById('qModelAnswer').value.trim() : '';
+        if (!model) { showAlert(alertId,'Please enter the model answer.'); return; }
+        data.correct = model;
+      }
+
+      var restore = setLoading(btn, 'Saving…');
+      var r = await _supabase.from('questions').insert([data]);
+      restore();
+      if (r.error) { showAlert(alertId,'Error: '+r.error.message); return; }
+      showAlert(alertId,'✅ Question added!','success');
+      document.getElementById('addQuestionForm').reset();
+      onQTypeChange('mcq');
+      await loadQuestions();
+    }
+  </script>
+</body>
+</html>
