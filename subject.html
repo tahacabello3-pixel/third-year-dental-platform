@@ -127,12 +127,22 @@
       </div>
 
       <div id="tab-prev" class="tab-panel active">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <a id="quizBtnPrev" href="#" style="display:inline-flex;align-items:center;gap:8px;padding:9px 20px;background:linear-gradient(135deg,#2563eb,#4f8ef7);color:#fff;border-radius:10px;font-size:.88rem;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(79,142,247,.3);">
+            🎯 Start Quiz
+          </a>
+        </div>
         <div id="prevExamsContent">
           <div class="content-loading">Loading…</div>
         </div>
       </div>
 
       <div id="tab-mid" class="tab-panel">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <a id="quizBtnMid" href="#" style="display:inline-flex;align-items:center;gap:8px;padding:9px 20px;background:linear-gradient(135deg,#2563eb,#4f8ef7);color:#fff;border-radius:10px;font-size:.88rem;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(79,142,247,.3);">
+            🎯 Start Quiz
+          </a>
+        </div>
         <div id="midtermContent">
           <div class="content-loading">Loading…</div>
         </div>
@@ -186,6 +196,12 @@
         lb.style.display = 'flex';
       }
     });
+
+    // Set quiz button links based on subject ID
+    var qBtnPrev = document.getElementById('quizBtnPrev');
+    var qBtnMid  = document.getElementById('quizBtnMid');
+    if (qBtnPrev) qBtnPrev.href = './quiz.html?subject=' + sid + '&section=previous_exams';
+    if (qBtnMid)  qBtnMid.href  = './quiz.html?subject=' + sid + '&section=midterm_quizzes';
 
     // Init page
     initSubjectPage();
