@@ -22,26 +22,16 @@
       </div>
     </div>
     <h1 class="brand-title">Join Your <span>Class</span><br>of 2025</h1>
-    <p class="brand-sub">Create your free student account and access all third-year Dental Medicine & Oral Surgery subjects instantly.</p>
+    <p class="brand-sub">Create your free student account and access all third-year subjects instantly.</p>
     <div class="brand-stats">
-      <div class="brand-stat">
-        <div class="brand-stat-num">12</div>
-        <div class="brand-stat-label">Subjects</div>
-      </div>
-      <div class="brand-stat">
-        <div class="brand-stat-num">🔒</div>
-        <div class="brand-stat-label">Secure</div>
-      </div>
-      <div class="brand-stat">
-        <div class="brand-stat-num">Free</div>
-        <div class="brand-stat-label">Always</div>
-      </div>
+      <div class="brand-stat"><div class="brand-stat-num">12</div><div class="brand-stat-label">Subjects</div></div>
+      <div class="brand-stat"><div class="brand-stat-num">🔒</div><div class="brand-stat-label">Secure</div></div>
+      <div class="brand-stat"><div class="brand-stat-num">Free</div><div class="brand-stat-label">Always</div></div>
     </div>
   </aside>
 
   <main class="auth-form-panel">
     <div class="auth-form-box">
-
       <div class="auth-form-header">
         <h1>Create Account</h1>
         <p>Fill in your details — takes less than a minute.</p>
@@ -50,32 +40,44 @@
       <div id="signupAlert" class="alert" role="alert"></div>
 
       <form id="signupForm" novalidate>
+
         <div class="form-group">
           <label for="full_name">Full Name</label>
           <input type="text" id="full_name" name="full_name" placeholder="e.g. Ahmed Al-Rashidi" autocomplete="name" required />
         </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label for="student_id">Student ID</label>
+            <label for="student_id">Student ID (رقم القيد)</label>
             <input type="text" id="student_id" name="student_id" placeholder="e.g. 2230903634" required />
           </div>
           <div class="form-group">
-            <label for="academic_year">Academic Year</label>
-            <input type="text" id="academic_year" name="academic_year" value="Third Year" readonly />
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="e.g. 0911234567" />
           </div>
         </div>
-        <div class="form-group">
-          <label for="university">University Name</label>
-          <input type="text" id="university" name="university" placeholder="e.g. University of Tripoli" required />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="university">University</label>
+            <input type="text" id="university" name="university" placeholder="e.g. University of Tripoli" required />
+          </div>
+          <div class="form-group">
+            <label for="faculty">Faculty</label>
+            <input type="text" id="faculty" name="faculty" placeholder="e.g. Faculty of Dentistry" required />
+          </div>
         </div>
+
         <div class="form-group">
-          <label for="faculty">Faculty / School</label>
-          <input type="text" id="faculty" name="faculty" placeholder="e.g. Faculty of Dentistry" required />
+          <label for="academic_year">Academic Year</label>
+          <input type="text" id="academic_year" name="academic_year" value="Third Year" readonly />
         </div>
+
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email">Email Address <span style="color:var(--text-muted);font-weight:400">(required for password recovery)</span></label>
           <input type="email" id="email" name="email" placeholder="you@university.edu" autocomplete="email" required />
         </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="password">Password</label>
@@ -96,6 +98,7 @@
             </div>
           </div>
         </div>
+
         <button type="submit" class="btn-primary">Create Account</button>
       </form>
 
