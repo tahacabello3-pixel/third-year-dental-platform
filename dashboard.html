@@ -116,10 +116,16 @@
           <div class="profile-field"><label>Faculty</label><span id="profileFaculty">—</span></div>
           <div class="profile-field"><label>Academic Year</label><span id="profileYear">Third Year</span></div>
           <div class="profile-field"><label>Student ID</label><span id="profileStudentId">—</span></div>
+          <div class="profile-field"><label>Phone</label><span id="profilePhone">—</span></div>
         </div>
       </div>
     </section>
 
+    <div style="text-align:right;margin-top:16px">
+      <a href="./profile.html" style="display:inline-flex;align-items:center;gap:8px;padding:8px 18px;background:var(--accent-bg);color:var(--accent);border:1px solid rgba(79,142,247,.25);border-radius:var(--r-sm);font-size:.85rem;font-weight:600;text-decoration:none;transition:all .2s" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='var(--accent-bg)';this.style.color='var(--accent)'">
+        ✏️ Edit Profile
+      </a>
+    </div>
     <div class="divider-line"></div>
 
     <!-- Subjects -->
@@ -279,6 +285,8 @@
       document.getElementById('profileFaculty').textContent   = (profile && profile.faculty)       || '—';
       document.getElementById('profileYear').textContent      = (profile && profile.academic_year) || 'Third Year';
       document.getElementById('profileStudentId').textContent = (profile && profile.student_id)    || '—';
+      var phoneEl = document.getElementById('profilePhone');
+      if (phoneEl) phoneEl.textContent = (profile && profile.phone) || '—';
 
 
 
