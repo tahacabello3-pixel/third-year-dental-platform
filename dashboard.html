@@ -54,6 +54,7 @@
       <div class="nav-links">
         <a href="./dashboard.html" class="nav-link active">Dashboard</a>
         <a href="./subjects.html"  class="nav-link">Subjects</a>
+        <a href="./announcements.html" class="nav-link">Announcements</a>
       </div>
       <div class="nav-right">
         <div class="nav-user-pill">
@@ -72,6 +73,9 @@
 
   <main class="page-wrapper">
 
+    <!-- Announcements preview (pinned only) -->
+    <div id="annPreview"></div>
+
     <!-- Welcome -->
     <div class="welcome-banner">
       <div class="welcome-text">
@@ -83,6 +87,9 @@
         <div class="welcome-badge-value">Third Year</div>
       </div>
     </div>
+
+    <!-- Announcements (loaded by JS) -->
+    <div id="announcementsSection" style="margin-bottom:24px;display:none"></div>
 
     <!-- Stats -->
     <div class="stats-row">
@@ -290,6 +297,9 @@
 
 
 
+      // Load announcements
+      await loadAnnouncements(isAdmin(user));
+
       document.querySelectorAll('.subject-card').forEach(function(card, i) {
         card.style.animationDelay = (i * 55) + 'ms';
         card.classList.add('card-animate');
@@ -300,6 +310,36 @@
       setTimeout(function(){ overlay.remove(); }, 400);
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Load pinned announcements preview
+      (async function() {
+        var r = await _supabase
+          .from('announcements')
+          .select('*')
+          .eq('pinned', true)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        var preview = document.getElementById('annPreview');
+        if (!preview || r.error || !r.data || r.data.length === 0) return;
+
+        var TYPE_ICONS = { info:'💬', success:'✅', warning:'⚠️', urgent:'🚨' };
+        var html = '';
+        r.data.forEach(function(ann) {
+          html += '<div class="announcement-card type-' + ann.type + '" style="margin-bottom:12px;cursor:pointer" onclick="window.location.href=\'./announcements.html\'">' +
+            '<div class="announcement-icon">' + (TYPE_ICONS[ann.type]||'💬') + '</div>' +
+            '<div class="announcement-body">' +
+              '<div class="announcement-header">' +
+                '<span class="announcement-title">' + ann.title.replace(/</g,'&lt;') + '</span>' +
+                '<span class="announcement-pin">📌 Pinned</span>' +
+              '</div>' +
+              '<div class="announcement-text">' + ann.body.replace(/</g,'&lt;').substring(0,120) + (ann.body.length>120?'…':'') + '</div>' +
+            '</div>' +
+          '</div>';
+        });
+
+        preview.innerHTML = html;
+      })();
     })();
   </script>
 </body>
