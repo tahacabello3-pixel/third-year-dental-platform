@@ -17,49 +17,37 @@
         <span>Third Year · Dental Medicine</span>
       </div>
     </div>
-
-    <h1 class="brand-title">
-      Your <span>Dental</span> Education<br>Starts Here
-    </h1>
-    <p class="brand-sub">
-      A dedicated platform for third-year Dental Medicine & Oral Surgery students. Access all 12 subjects, revision materials, and more.
-    </p>
-
+    <h1 class="brand-title">Your <span>Dental</span> Education<br>Starts Here</h1>
+    <p class="brand-sub">Sign in using your email, student ID, or phone number.</p>
     <div class="brand-stats">
-      <div class="brand-stat">
-        <div class="brand-stat-num">12</div>
-        <div class="brand-stat-label">Subjects</div>
-      </div>
-      <div class="brand-stat">
-        <div class="brand-stat-num">3rd</div>
-        <div class="brand-stat-label">Year</div>
-      </div>
-      <div class="brand-stat">
-        <div class="brand-stat-num">Free</div>
-        <div class="brand-stat-label">Always</div>
-      </div>
+      <div class="brand-stat"><div class="brand-stat-num">12</div><div class="brand-stat-label">Subjects</div></div>
+      <div class="brand-stat"><div class="brand-stat-num">3rd</div><div class="brand-stat-label">Year</div></div>
+      <div class="brand-stat"><div class="brand-stat-num">Free</div><div class="brand-stat-label">Always</div></div>
     </div>
   </aside>
 
   <main class="auth-form-panel">
     <div class="auth-form-box">
-
       <div class="auth-form-header">
         <h1>Welcome back 👋</h1>
-        <p>Sign in to your student account to continue.</p>
+        <p>Sign in with your email, student ID, or phone number.</p>
       </div>
 
       <div id="loginAlert" class="alert" role="alert"></div>
 
       <form id="loginForm" novalidate>
         <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" placeholder="you@university.edu" autocomplete="email" required />
+          <label for="identifier">Email / Student ID / Phone</label>
+          <input type="text" id="identifier" name="identifier"
+            placeholder="Email, Student ID, or Phone number"
+            autocomplete="username" required />
         </div>
         <div class="form-group">
           <label for="password">Password</label>
           <div class="input-wrapper">
-            <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required />
+            <input type="password" id="password" name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password" required />
             <button type="button" class="toggle-password" onclick="togglePwd('password',this)">
               <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -89,14 +77,32 @@
         ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
         : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
     }
+
+    // Forgot password — always needs email
     document.getElementById('forgotLink').addEventListener('click', async function(e) {
       e.preventDefault();
-      var email = document.getElementById('email').value.trim();
-      if (!email) { showAlert('loginAlert', 'Enter your email above first.'); return; }
+      var val = document.getElementById('identifier').value.trim();
+      var email = '';
+      // If looks like email use directly, else search profiles
+      if (val.includes('@')) {
+        email = val;
+      } else {
+        // lookup email from profiles
+        var r = await _supabase.from('profiles')
+          .select('email')
+          .or('student_id.eq.' + val + ',phone.eq.' + val)
+          .single();
+        if (r.error || !r.data) {
+          showAlert('loginAlert', 'Could not find an account with that ID or phone. Please enter your email instead.');
+          return;
+        }
+        email = r.data.email;
+      }
       var res = await _supabase.auth.resetPasswordForEmail(email);
       if (res.error) showAlert('loginAlert', res.error.message);
-      else showAlert('loginAlert', '✅ Password reset email sent! Check your inbox.', 'success');
+      else showAlert('loginAlert', '✅ Password reset email sent to ' + email, 'success');
     });
+
     initLoginPage();
   </script>
 </body>
