@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Announcements — DentalEd Year 3</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>" />
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    #loadingOverlay {
+      position:fixed;inset:0;background:#0d0f14;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:16px;z-index:9999;transition:opacity .35s ease;
+    }
+    #loadingOverlay.hidden{opacity:0;pointer-events:none;}
+    .loading-tooth{font-size:2.8rem;animation:pulse 1.2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+    .loading-text{font-size:.88rem;color:#4a5068;font-family:'Inter',sans-serif;}
+    .loading-bar{width:120px;height:3px;background:#1a1e2a;border-radius:99px;overflow:hidden;}
+    .loading-bar-fill{height:100%;width:40%;background:linear-gradient(90deg,#2563eb,#4f8ef7);border-radius:99px;animation:slide 1.2s ease-in-out infinite;}
+    @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+    .admin-form-group{display:flex;flex-direction:column;gap:6px;}
+    .admin-form-group label{font-size:.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;}
+    .admin-form-group input,
+    .admin-form-group select,
+    .admin-form-group textarea{background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-primary);font-family:var(--font-body);font-size:.9rem;padding:9px 12px;outline:none;transition:border-color .2s;}
+    .admin-form-group input:focus,
+    .admin-form-group select:focus,
+    .admin-form-group textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.12);}
+    .admin-form-group textarea{resize:vertical;min-height:90px;line-height:1.6;}
+    .pin-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.88rem;color:var(--text-secondary);}
+    .pin-toggle input{width:16px;height:16px;cursor:pointer;}
+  </style>
+</head>
+<body>
+
+  <div id="loadingOverlay">
+    <div class="loading-tooth">🦷</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    <div class="loading-text">Loading announcements…</div>
+  </div>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a href="./dashboard.html" class="nav-brand">
+        <div class="nav-brand-icon">🦷</div>
+        <span class="nav-brand-text">DentalEd</span>
+        <span class="nav-brand-badge">Year 3</span>
+      </a>
+      <div class="nav-links">
+        <a href="./dashboard.html" class="nav-link">Dashboard</a>
+        <a href="./subjects.html" class="nav-link">Subjects</a>
+        <a href="./announcements.html" class="nav-link active">Announcements</a>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">S</div>
+          <span id="navName">Student</span>
+        </div>
+        <button id="logoutBtn" class="btn-logout">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-wrapper">
+
+    <!-- Hero -->
+    <div class="subjects-hero" style="margin-bottom:28px">
+      <h1>📢 Announcements</h1>
+      <p>Important updates and news from your dental platform.</p>
+    </div>
+
+    <!-- Admin panel -->
+    <div class="admin-ann-panel" id="adminAnnPanel" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <span class="admin-badge">Admin</span>
+        <h3 style="font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text-primary)">Post Announcement</h3>
+      </div>
+
+      <div id="annAdminAlert" class="alert" style="margin-bottom:14px"></div>
+
+      <form id="addAnnForm" novalidate>
+        <div class="admin-ann-grid">
+
+          <div class="admin-form-group">
+            <label>Type</label>
+            <select id="annType">
+              <option value="info">💬 Info</option>
+              <option value="success">✅ Success</option>
+              <option value="warning">⚠️ Warning</option>
+              <option value="urgent">🚨 Urgent</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group" style="justify-content:flex-end;padding-bottom:4px">
+            <label>&nbsp;</label>
+            <label class="pin-toggle">
+              <input type="checkbox" id="annPinned" />
+              📌 Pin this announcement (shows at top)
+            </label>
+          </div>
+
+          <div class="admin-form-group ann-full">
+            <label>Title</label>
+            <input type="text" id="annTitle" placeholder="e.g. Exam schedule updated" required />
+          </div>
+
+          <div class="admin-form-group ann-full">
+            <label>Message</label>
+            <textarea id="annBody" placeholder="Write the announcement details here…" required></textarea>
+          </div>
+
+        </div>
+
+        <button type="submit" class="btn-admin-submit" id="annSubmitBtn">📢 Post Announcement</button>
+      </form>
+    </div>
+
+    <!-- Announcements list -->
+    <div id="annList">
+      <div class="no-announcements">Loading…</div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase.js"></script>
+  <script src="./app.js"></script>
+  <script>
+    var TYPE_ICONS = { info:'💬', success:'✅', warning:'⚠️', urgent:'🚨' };
+    var currentUser = null;
+
+    (async function() {
+      var session = await requireAuth();
+      if (!session) return;
+
+      currentUser = session.user;
+      var profile = await fetchProfile(currentUser.id);
+      var name = (profile && profile.full_name) ? profile.full_name : currentUser.email;
+
+      document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('navName').textContent   = name.split(' ')[0];
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Show admin panel if admin
+      if (isAdmin(currentUser)) {
+        document.getElementById('adminAnnPanel').style.display = 'block';
+        document.getElementById('addAnnForm').addEventListener('submit', handlePostAnnouncement);
+      }
+
+      await loadAnnouncements();
+
+      var overlay = document.getElementById('loadingOverlay');
+      overlay.classList.add('hidden');
+      setTimeout(function(){ overlay.remove(); }, 400);
+    })();
+
+    async function loadAnnouncements() {
+      var list = document.getElementById('annList');
+      list.innerHTML = '<div class="no-announcements">Loading…</div>';
+
+      var r = await _supabase
+        .from('announcements')
+        .select('*')
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (r.error || !r.data || r.data.length === 0) {
+        list.innerHTML = '<div class="no-announcements">📭 No announcements yet.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      r.data.forEach(function(ann) {
+        list.appendChild(renderAnnouncement(ann));
+      });
+    }
+
+    function renderAnnouncement(ann) {
+      var div = document.createElement('div');
+      div.className = 'announcement-card type-' + ann.type;
+      div.id = 'ann-' + ann.id;
+
+      var date = new Date(ann.created_at).toLocaleDateString('en-GB', {
+        day:'numeric', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+
+      var pinBadge = ann.pinned ? '<span class="announcement-pin">📌 Pinned</span>' : '';
+
+      var deleteBtn = isAdmin(currentUser)
+        ? '<button class="announcement-delete" onclick="deleteAnnouncement(\'' + ann.id + '\')" title="Delete">✕</button>'
+        : '';
+
+      div.innerHTML =
+        '<div class="announcement-icon">' + (TYPE_ICONS[ann.type] || '💬') + '</div>' +
+        '<div class="announcement-body">' +
+          '<div class="announcement-header">' +
+            '<span class="announcement-title">' + escAnn(ann.title) + '</span>' +
+            pinBadge +
+          '</div>' +
+          '<div class="announcement-text">' + escAnn(ann.body).replace(/\n/g,'<br>') + '</div>' +
+          '<div class="announcement-date">' + date + '</div>' +
+        '</div>' +
+        deleteBtn;
+
+      return div;
+    }
+
+    async function handlePostAnnouncement(e) {
+      e.preventDefault();
+      hideAlert('annAdminAlert');
+
+      var title  = document.getElementById('annTitle').value.trim();
+      var body   = document.getElementById('annBody').value.trim();
+      var type   = document.getElementById('annType').value;
+      var pinned = document.getElementById('annPinned').checked;
+      var btn    = document.getElementById('annSubmitBtn');
+
+      if (!title) { showAlert('annAdminAlert', 'Please enter a title.'); return; }
+      if (!body)  { showAlert('annAdminAlert', 'Please enter a message.'); return; }
+
+      var restore = setLoading(btn, 'Posting…');
+
+      var r = await _supabase.from('announcements').insert([{
+        title: title, body: body,
+        type: type, pinned: pinned,
+        created_by: currentUser.id
+      }]);
+
+      restore();
+
+      if (r.error) { showAlert('annAdminAlert', 'Error: ' + r.error.message); return; }
+
+      showAlert('annAdminAlert', '✅ Announcement posted!', 'success');
+      document.getElementById('addAnnForm').reset();
+      await loadAnnouncements();
+    }
+
+    async function deleteAnnouncement(id) {
+      if (!confirm('Delete this announcement?')) return;
+      await _supabase.from('announcements').delete().eq('id', id);
+      var el = document.getElementById('ann-' + id);
+      if (el) el.remove();
+      var list = document.getElementById('annList');
+      if (!list.children.length) {
+        list.innerHTML = '<div class="no-announcements">📭 No announcements yet.</div>';
+      }
+    }
+
+    function escAnn(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>
