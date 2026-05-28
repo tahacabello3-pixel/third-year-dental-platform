@@ -1,11 +1,12 @@
 // ============================================================
-// app.js — Auth, routing, admin detection, content loading
+// app.js — Auth, routing, admin, content, quiz logic
 // ============================================================
 
 const ADMIN_EMAIL = 'tahacabello3@gmail.com';
 
 // ── Helpers ──────────────────────────────────────────────────
-function showAlert(id, msg, type = 'error') {
+function showAlert(id, msg, type) {
+  type = type || 'error';
   var el = document.getElementById(id);
   if (!el) return;
   el.textContent = msg;
@@ -51,24 +52,59 @@ async function fetchProfile(userId) {
   return r.error ? null : r.data;
 }
 
-// ── Login ─────────────────────────────────────────────────────
+// ── Resolve identifier to email ───────────────────────────────
+// Accepts email / student_id / phone → returns email string or null
+async function resolveToEmail(identifier) {
+  identifier = identifier.trim();
+  if (!identifier) return null;
+
+  // Already an email
+  if (isValidEmail(identifier)) return identifier;
+
+  // Search profiles by student_id or phone
+  var r = await _supabase
+    .from('profiles')
+    .select('email')
+    .or('student_id.eq.' + identifier + ',phone.eq.' + identifier)
+    .limit(1);
+
+  if (r.error || !r.data || r.data.length === 0) return null;
+  return r.data[0].email;
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────
 function initLoginPage() {
   redirectIfLoggedIn();
   var form = document.getElementById('loginForm');
   if (!form) return;
+
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     hideAlert('loginAlert');
-    var email    = form.email.value.trim();
-    var password = form.password.value;
-    var btn      = form.querySelector('button[type="submit"]');
-    if (!email || !password) { showAlert('loginAlert', 'Please fill in all fields.'); return; }
-    if (!isValidEmail(email)) { showAlert('loginAlert', 'Please enter a valid email.'); return; }
+
+    var identifier = (form.identifier || form.email).value.trim();
+    var password   = form.password.value;
+    var btn        = form.querySelector('button[type="submit"]');
+
+    if (!identifier || !password) { showAlert('loginAlert', 'Please fill in all fields.'); return; }
+
     var restore = setLoading(btn, 'Signing in…');
+
+    // Resolve to email
+    var email = await resolveToEmail(identifier);
+    if (!email) {
+      restore();
+      showAlert('loginAlert', 'No account found with that email, student ID, or phone number.');
+      return;
+    }
+
     var r = await _supabase.auth.signInWithPassword({ email: email, password: password });
     restore();
+
     if (r.error) {
-      var msg = r.error.message.includes('Invalid login') ? 'Incorrect email or password.' : r.error.message;
+      var msg = r.error.message.includes('Invalid login')
+        ? 'Incorrect password. Please try again.'
+        : r.error.message;
       showAlert('loginAlert', msg);
       return;
     }
@@ -76,46 +112,61 @@ function initLoginPage() {
   });
 }
 
-// ── Sign up ───────────────────────────────────────────────────
+// ── SIGN UP ───────────────────────────────────────────────────
 function initSignupPage() {
   redirectIfLoggedIn();
   var form = document.getElementById('signupForm');
   if (!form) return;
+
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     hideAlert('signupAlert');
+
     var fullName   = form.full_name.value.trim();
     var studentId  = form.student_id.value.trim();
+    var phone      = form.phone ? form.phone.value.trim() : '';
     var university = form.university.value.trim();
     var faculty    = form.faculty.value.trim();
     var email      = form.email.value.trim();
     var password   = form.password.value;
     var confirm    = form.confirm_password.value;
     var btn        = form.querySelector('button[type="submit"]');
+
     if (!fullName || !studentId || !university || !faculty || !email || !password || !confirm) {
-      showAlert('signupAlert', 'Please fill in all fields.'); return;
+      showAlert('signupAlert', 'Please fill in all required fields.'); return;
     }
-    if (!isValidEmail(email)) { showAlert('signupAlert', 'Please enter a valid email.'); return; }
+    if (!isValidEmail(email)) { showAlert('signupAlert', 'Please enter a valid email address.'); return; }
     if (password.length < 6)  { showAlert('signupAlert', 'Password must be at least 6 characters.'); return; }
     if (password !== confirm)  { showAlert('signupAlert', 'Passwords do not match.'); return; }
+
     var restore = setLoading(btn, 'Creating account…');
-    var r = await _supabase.auth.signUp({ email: email, password: password, options: { data: { full_name: fullName } } });
+
+    var r = await _supabase.auth.signUp({
+      email: email, password: password,
+      options: { data: { full_name: fullName } }
+    });
+
     if (r.error) { restore(); showAlert('signupAlert', r.error.message); return; }
+
     var userId = r.data.user && r.data.user.id;
     if (userId) {
       await _supabase.from('profiles').insert([{
-        id: userId, full_name: fullName, student_id: studentId,
+        id: userId, full_name: fullName,
+        student_id: studentId,
+        phone: phone || null,
         university: university, faculty: faculty,
-        academic_year: 'Third Year', email: email, created_at: new Date().toISOString()
+        academic_year: 'Third Year', email: email,
+        created_at: new Date().toISOString()
       }]);
     }
+
     restore();
     showAlert('signupAlert', '✅ Account created! You can now sign in.', 'success');
     form.reset();
   });
 }
 
-// ── Subject page ──────────────────────────────────────────────
+// ── SUBJECT PAGE ──────────────────────────────────────────────
 async function initSubjectPage() {
   var session = await requireAuth();
   if (!session) return;
@@ -124,29 +175,23 @@ async function initSubjectPage() {
   var profile = await fetchProfile(user.id);
   var name    = (profile && profile.full_name) ? profile.full_name : user.email;
 
-  // Nav
   var navAvatar = document.getElementById('navAvatar');
   var navName   = document.getElementById('navName');
   if (navAvatar) navAvatar.textContent = name.charAt(0).toUpperCase();
   if (navName)   navName.textContent   = name.split(' ')[0];
 
-  // Admin panel
   var adminPanel = document.getElementById('adminPanel');
   if (adminPanel) adminPanel.style.display = isAdmin(user) ? 'block' : 'none';
 
-  // Logout
   var logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
-  // Get subject from URL
   var params    = new URLSearchParams(window.location.search);
   var subjectId = params.get('id') || 'unknown';
 
-  // Load content for both tabs
   await loadContent(subjectId, 'previous_exams');
   await loadContent(subjectId, 'midterm_quizzes');
 
-  // Tab switching
   document.querySelectorAll('.tab-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -157,7 +202,6 @@ async function initSubjectPage() {
     });
   });
 
-  // Admin form submit
   var addForm = document.getElementById('addContentForm');
   if (addForm && isAdmin(user)) {
     addForm.addEventListener('submit', async function(e) {
@@ -166,12 +210,11 @@ async function initSubjectPage() {
     });
   }
 
-  // Hide loading
   var overlay = document.getElementById('loadingOverlay');
   if (overlay) { overlay.classList.add('hidden'); setTimeout(function(){ overlay.remove(); }, 400); }
 }
 
-// ── Load content from Supabase ────────────────────────────────
+// ── Load content ──────────────────────────────────────────────
 async function loadContent(subjectId, section) {
   var containerId = section === 'previous_exams' ? 'prevExamsContent' : 'midtermContent';
   var container   = document.getElementById(containerId);
@@ -193,16 +236,12 @@ async function loadContent(subjectId, section) {
   }
 
   container.innerHTML = '';
-  r.data.forEach(function(item) {
-    container.appendChild(renderContentItem(item));
-  });
+  r.data.forEach(function(item) { container.appendChild(renderContentItem(item)); });
 }
 
-// ── Render a single content item ──────────────────────────────
 function renderContentItem(item) {
   var div = document.createElement('div');
   div.className = 'content-item';
-  div.dataset.id = item.id;
 
   var header = '<div class="content-item-header">' +
     '<div class="content-item-title">' +
@@ -214,27 +253,17 @@ function renderContentItem(item) {
 
   var body = '';
   if (item.type === 'text') {
-    body = '<div class="content-text">' + escHtml(item.content || '').replace(/\n/g, '<br>') + '</div>';
+    body = '<div class="content-text">' + escHtml(item.content || '').replace(/\n/g,'<br>') + '</div>';
   } else if (item.type === 'image') {
-    body = '<div class="content-image-wrap"><img src="' + item.file_url + '" alt="' + escHtml(item.title) + '" class="content-image" loading="lazy" /></div>';
+    body = '<div class="content-image-wrap"><img src="' + item.file_url + '" alt="' + escHtml(item.title) + '" class="content-image" loading="lazy"/></div>';
   } else if (item.type === 'pdf') {
     body = '<a href="' + item.file_url + '" target="_blank" class="content-pdf-link">' +
       '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
-      escHtml(item.file_name || item.title) + ' — Open PDF' +
-      '</a>';
+      escHtml(item.file_name || item.title) + ' — Open PDF</a>';
   }
-
-  // Admin delete button
-  var adminBtn = '';
-  var session = null;
-  try {
-    // We'll add the delete button via JS after render if admin
-    adminBtn = '<button class="btn-delete-item" onclick="deleteContent(\'' + item.id + '\', \'' + item.subject_id + '\', \'' + item.section + '\')" title="Delete">✕</button>';
-  } catch(e){}
 
   div.innerHTML = header + body;
 
-  // Add delete btn if admin (check via DOM — adminPanel visible means admin)
   var adminPanel = document.getElementById('adminPanel');
   if (adminPanel && adminPanel.style.display !== 'none') {
     var delBtn = document.createElement('button');
@@ -244,7 +273,6 @@ function renderContentItem(item) {
     delBtn.onclick = function(){ deleteContent(item.id, item.subject_id, item.section); };
     div.querySelector('.content-item-header').appendChild(delBtn);
   }
-
   return div;
 }
 
@@ -252,80 +280,59 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Delete content item ───────────────────────────────────────
 async function deleteContent(id, subjectId, section) {
   if (!confirm('Delete this item?')) return;
-
-  // Get file_url to delete from storage if needed
   var r = await _supabase.from('subject_content').select('file_url,type').eq('id', id).single();
   if (!r.error && r.data && (r.data.type === 'image' || r.data.type === 'pdf') && r.data.file_url) {
-    // Extract path from URL
-    var url   = r.data.file_url;
-    var parts = url.split('/content-files/');
+    var parts = r.data.file_url.split('/content-files/');
     if (parts[1]) await _supabase.storage.from('content-files').remove([parts[1]]);
   }
-
   await _supabase.from('subject_content').delete().eq('id', id);
   await loadContent(subjectId, section);
 }
 
-// ── Handle add content form ───────────────────────────────────
 async function handleAddContent(subjectId, user) {
-  var section  = document.getElementById('addSection').value;
-  var title    = document.getElementById('addTitle').value.trim();
-  var type     = document.getElementById('addType').value;
-  var textArea = document.getElementById('addText');
-  var fileInput= document.getElementById('addFile');
-  var btn      = document.querySelector('#addContentForm .btn-admin-submit');
-  var alertId  = 'adminAlert';
+  var section   = document.getElementById('addSection').value;
+  var title     = document.getElementById('addTitle').value.trim();
+  var type      = document.getElementById('addType').value;
+  var textArea  = document.getElementById('addText');
+  var fileInput = document.getElementById('addFile');
+  var btn       = document.querySelector('#addContentForm .btn-admin-submit');
+  var alertId   = 'adminAlert';
 
   if (!title) { showAlert(alertId, 'Please enter a title.'); return; }
-  if (type === 'text' && (!textArea || !textArea.value.trim())) {
-    showAlert(alertId, 'Please enter the text content.'); return;
-  }
-  if ((type === 'image' || type === 'pdf') && (!fileInput || !fileInput.files[0])) {
-    showAlert(alertId, 'Please select a file.'); return;
-  }
+  if (type === 'text' && (!textArea || !textArea.value.trim())) { showAlert(alertId, 'Please enter text content.'); return; }
+  if ((type === 'image' || type === 'pdf') && (!fileInput || !fileInput.files[0])) { showAlert(alertId, 'Please select a file.'); return; }
 
   var restore = setLoading(btn, 'Uploading…');
   hideAlert(alertId);
 
-  var insertData = {
-    subject_id: subjectId,
-    section:    section,
-    title:      title,
-    type:       type,
-    created_by: user.id
-  };
+  var insertData = { subject_id: subjectId, section: section, title: title, type: type, created_by: user.id };
 
   if (type === 'text') {
     insertData.content = textArea.value.trim();
   } else {
-    var file      = fileInput.files[0];
-    var ext       = file.name.split('.').pop();
-    var filePath  = subjectId + '/' + section + '/' + Date.now() + '.' + ext;
-    var upResult  = await _supabase.storage.from('content-files').upload(filePath, file, { upsert: false });
-    if (upResult.error) { restore(); showAlert(alertId, 'Upload failed: ' + upResult.error.message); return; }
-    var urlResult = _supabase.storage.from('content-files').getPublicUrl(filePath);
-    insertData.file_url  = urlResult.data.publicUrl;
+    var file     = fileInput.files[0];
+    var ext      = file.name.split('.').pop();
+    var filePath = subjectId + '/' + section + '/' + Date.now() + '.' + ext;
+    var up = await _supabase.storage.from('content-files').upload(filePath, file, { upsert: false });
+    if (up.error) { restore(); showAlert(alertId, 'Upload failed: ' + up.error.message); return; }
+    insertData.file_url  = _supabase.storage.from('content-files').getPublicUrl(filePath).data.publicUrl;
     insertData.file_name = file.name;
   }
 
   var r = await _supabase.from('subject_content').insert([insertData]);
   restore();
-
   if (r.error) { showAlert(alertId, 'Error: ' + r.error.message); return; }
-
   showAlert(alertId, '✅ Added successfully!', 'success');
   document.getElementById('addContentForm').reset();
   toggleTypeFields('text');
   await loadContent(subjectId, section);
 }
 
-// ── Toggle form fields based on type ─────────────────────────
 function toggleTypeFields(type) {
-  var textWrap = document.getElementById('textWrap');
-  var fileWrap = document.getElementById('fileWrap');
+  var textWrap  = document.getElementById('textWrap');
+  var fileWrap  = document.getElementById('fileWrap');
   if (textWrap) textWrap.style.display = type === 'text' ? 'block' : 'none';
   if (fileWrap) fileWrap.style.display = (type === 'image' || type === 'pdf') ? 'block' : 'none';
   var fileInput = document.getElementById('addFile');
