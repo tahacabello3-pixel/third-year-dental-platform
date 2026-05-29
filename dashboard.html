@@ -274,6 +274,19 @@
   <script src="./supabase.js"></script>
   <script src="./app.js"></script>
   <script>
+    function setAvatarDisplay(elId, name, avatarUrl) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      if (avatarUrl) {
+        el.innerHTML = '<img src="' + avatarUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+        el.style.fontSize = '0';
+      } else {
+        el.innerHTML = '';
+        el.textContent = name.charAt(0).toUpperCase();
+        el.style.fontSize = '';
+      }
+    }
+
     (async function() {
       var session = await requireAuth();
       if (!session) return;
@@ -284,10 +297,10 @@
       var initial = name.charAt(0).toUpperCase();
 
       document.getElementById('studentName').textContent      = name;
-      document.getElementById('navAvatar').textContent        = initial;
+      setAvatarDisplay('navAvatar', name, profile && profile.avatar_url);
       document.getElementById('navName').textContent          = name.split(' ')[0];
       document.getElementById('profileName').textContent      = name;
-      document.getElementById('profileAvatar').textContent    = initial;
+      setAvatarDisplay('profileAvatar', name, profile && profile.avatar_url);
       document.getElementById('profileEmail').textContent     = (profile && profile.email)         || user.email || '—';
       document.getElementById('profileUniv').textContent      = (profile && profile.university)    || '—';
       document.getElementById('profileFaculty').textContent   = (profile && profile.faculty)       || '—';
