@@ -393,7 +393,7 @@
         var { data: urlData } = _supabase.storage.from('pfp').getPublicUrl(path);
         var publicUrl = urlData.publicUrl;
 
-        var { error: dbErr } = await _supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl }, { onConflict: 'id' });
+        var { error: dbErr } = await _supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
         avatarEl.classList.remove('avatar-uploading');
 
         if (dbErr) {
