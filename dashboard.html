@@ -53,6 +53,7 @@
       </a>
       <div class="nav-links">
         <a href="./dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="./admin.html" id="adminNavLink" class="nav-link" style="display:none;color:var(--yellow)">⚙️ Admin</a>
         <a href="./subjects.html"  class="nav-link">Subjects</a>
         <a href="./announcements.html" class="nav-link">Announcements</a>
       </div>
@@ -80,7 +81,7 @@
     <div class="welcome-banner">
       <div class="welcome-text">
         <h1>Welcome back, <span id="studentName">Student</span> 👋</h1>
-        <p>Access your subjects, review materials, and stay ahead of your third-year curriculum.</p>
+        <p id="welcomeMsg">Access your subjects, review materials, and stay ahead of your third-year curriculum.</p>
       </div>
       <div class="welcome-badge">
         <div class="welcome-badge-label">Academic Year</div>
@@ -300,6 +301,19 @@
       // Load announcements
       await loadAnnouncements(isAdmin(user));
 
+      // Load site settings (welcome message, maintenance)
+      (async function() {
+        var sr = await _supabase.from('site_settings').select('welcome_message,maintenance_mode,maintenance_message').eq('id',1).single();
+        if (!sr.error && sr.data) {
+          if (!isAdmin(user) && sr.data.maintenance_mode) {
+            document.body.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d0f14;color:#f0f2f8;font-family:Inter,sans-serif;text-align:center;padding:24px"><div style="font-size:3rem;margin-bottom:16px">🔧</div><h2 style="font-size:1.4rem;font-weight:700;margin-bottom:10px">Under Maintenance</h2><p style="color:#8b93aa;max-width:400px">' + (sr.data.maintenance_message||'Back soon.') + '</p></div>';
+            return;
+          }
+          var wm = document.getElementById('welcomeMsg');
+          if (wm && sr.data.welcome_message) wm.textContent = sr.data.welcome_message;
+        }
+      })();
+
       document.querySelectorAll('.subject-card').forEach(function(card, i) {
         card.style.animationDelay = (i * 55) + 'ms';
         card.classList.add('card-animate');
@@ -310,6 +324,10 @@
       setTimeout(function(){ overlay.remove(); }, 400);
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
+      if (isAdmin(user)) {
+        var adminLink = document.getElementById('adminNavLink');
+        if (adminLink) adminLink.style.display = 'inline-flex';
+      }
 
       // Load pinned announcements preview
       (async function() {
