@@ -327,6 +327,8 @@
       if (isAdmin(user)) {
         var adminLink = document.getElementById('adminNavLink');
         if (adminLink) adminLink.style.display = 'inline-flex';
+        var bnAdmin = document.querySelector('.bn-admin');
+        if (bnAdmin) bnAdmin.style.display = 'flex';
       }
 
       // Load pinned announcements preview
@@ -417,27 +419,7 @@
         if (ripple) { ripple.classList.remove('animate'); void ripple.offsetWidth; ripple.classList.add('animate'); }
       });
     });
-    // Show admin item if admin — check Supabase session
-    if (window._supabase) {
-      _supabase.auth.getSession().then(function(r) {
-        if (r.data && r.data.session && r.data.session.user.email === 'tahacabello3@gmail.com') {
-          var adminItem = document.querySelector('.bn-admin');
-          if (adminItem) adminItem.style.display = 'flex';
-        }
-      });
-    } else {
-      // Fallback: try after scripts load
-      window.addEventListener('load', function() {
-        if (window._supabase) {
-          _supabase.auth.getSession().then(function(r) {
-            if (r.data && r.data.session && r.data.session.user.email === 'tahacabello3@gmail.com') {
-              var adminItem = document.querySelector('.bn-admin');
-              if (adminItem) adminItem.style.display = 'flex';
-            }
-          });
-        }
-      });
-    }
+    // bn-admin visibility is handled by initDashboardPage() in app.js
   })();
   </script>
 
