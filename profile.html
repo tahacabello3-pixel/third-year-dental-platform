@@ -129,6 +129,36 @@
     }
     .btn-cancel:hover { border-color: var(--border-hover); color: var(--text-primary); }
 
+    /* Avatar upload */
+    .profile-avatar-xl {
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .profile-avatar-xl img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .avatar-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.55);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .profile-avatar-xl:hover .avatar-overlay { opacity: 1; }
+    .avatar-overlay svg { color: #fff; }
+    .avatar-upload-hint {
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
+    #avatarInput { display: none; }
+    .avatar-uploading { opacity: 0.6; pointer-events: none; }
+
     /* Password change section */
     .password-section {
       background: var(--bg-card);
@@ -188,7 +218,16 @@
     <!-- Profile edit card -->
     <div class="profile-page-card">
       <div class="profile-page-header">
-        <div class="profile-avatar-xl" id="profileAvatar">S</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="profile-avatar-xl" id="profileAvatar" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+            <span id="avatarInitial">S</span>
+            <div class="avatar-overlay">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+          <span class="avatar-upload-hint">Tap to change photo</span>
+          <input type="file" id="avatarInput" accept="image/*" />
+        </div>
         <div>
           <h2 id="profileNameHeader">Loading…</h2>
           <p>Edit your personal information below.</p>
@@ -308,8 +347,75 @@
       document.getElementById('logoutBtn').addEventListener('click', logout);
 
       // Fill profile avatar
-      document.getElementById('profileAvatar').textContent    = name.charAt(0).toUpperCase();
+      document.getElementById('avatarInitial').textContent    = name.charAt(0).toUpperCase();
       document.getElementById('profileNameHeader').textContent = name;
+
+      // Load existing avatar photo
+      async function loadAvatar() {
+        if (profile && profile.avatar_url) {
+          var avatarEl = document.getElementById('profileAvatar');
+          var img = document.createElement('img');
+          img.src = profile.avatar_url + '?t=' + Date.now();
+          img.onload = function() {
+            document.getElementById('avatarInitial').style.display = 'none';
+            avatarEl.insertBefore(img, avatarEl.firstChild);
+            // Also update nav
+            var navAv = document.getElementById('navAvatar');
+            navAv.style.backgroundImage = 'url(' + img.src + ')';
+            navAv.style.backgroundSize = 'cover';
+            navAv.textContent = '';
+          };
+        }
+      }
+      await loadAvatar();
+
+      // Avatar upload
+      document.getElementById('avatarInput').addEventListener('change', async function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) {
+          showAlert('profileAlert', '⚠️ Image must be under 3MB.'); return;
+        }
+
+        var avatarEl = document.getElementById('profileAvatar');
+        avatarEl.classList.add('avatar-uploading');
+        showAlert('profileAlert', '⏳ Uploading photo…');
+
+        var ext = file.name.split('.').pop();
+        var path = user.id + '/avatar.' + ext;
+
+        var { error: upErr } = await _supabase.storage.from('pfp').upload(path, file, { upsert: true, contentType: file.type });
+        if (upErr) {
+          avatarEl.classList.remove('avatar-uploading');
+          showAlert('profileAlert', '❌ Upload failed: ' + upErr.message); return;
+        }
+
+        var { data: urlData } = _supabase.storage.from('pfp').getPublicUrl(path);
+        var publicUrl = urlData.publicUrl;
+
+        var { error: dbErr } = await _supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl }, { onConflict: 'id' });
+        avatarEl.classList.remove('avatar-uploading');
+
+        if (dbErr) {
+          showAlert('profileAlert', '❌ Could not save photo URL: ' + dbErr.message); return;
+        }
+
+        // Show new photo
+        var oldImg = avatarEl.querySelector('img');
+        if (oldImg) oldImg.remove();
+        document.getElementById('avatarInitial').style.display = 'none';
+        var newImg = document.createElement('img');
+        newImg.src = publicUrl + '?t=' + Date.now();
+        avatarEl.insertBefore(newImg, avatarEl.firstChild);
+
+        // Update nav
+        var navAv = document.getElementById('navAvatar');
+        navAv.style.backgroundImage = 'url(' + newImg.src + ')';
+        navAv.style.backgroundSize = 'cover';
+        navAv.textContent = '';
+
+        showAlert('profileAlert', '✅ Photo updated!', 'success');
+      });
 
       // Fill form
       if (profile) {
@@ -373,7 +479,7 @@
         // Update nav name
         document.getElementById('navAvatar').textContent        = fullName.charAt(0).toUpperCase();
         document.getElementById('navName').textContent          = fullName.split(' ')[0];
-        document.getElementById('profileAvatar').textContent    = fullName.charAt(0).toUpperCase();
+        document.getElementById('avatarInitial').textContent    = fullName.charAt(0).toUpperCase();
         document.getElementById('profileNameHeader').textContent = fullName;
 
         showAlert('profileAlert', '✅ Profile updated successfully!', 'success');
