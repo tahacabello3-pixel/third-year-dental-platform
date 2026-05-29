@@ -344,17 +344,31 @@
 
         var restore = setLoading(btn, 'Saving…');
 
-        var r = await _supabase.from('profiles').update({
-          full_name:  fullName,
-          student_id: studentId,
-          phone:      phone || null,
-          university: university,
-          faculty:    faculty
-        }).eq('id', user.id);
+        var r = await _supabase.from('profiles').upsert({
+          id:           user.id,
+          full_name:    fullName,
+          student_id:   studentId,
+          phone:        phone || null,
+          university:   university,
+          faculty:      faculty,
+          email:        user.email,
+          academic_year: 'Third Year'
+        }, { onConflict: 'id' });
 
         restore();
 
-        if (r.error) { showAlert('profileAlert', 'Error: ' + r.error.message); return; }
+        if (r.error) {
+          console.error('Profile save error:', r.error);
+          showAlert('profileAlert', 'Error saving profile: ' + r.error.message);
+          return;
+        }
+
+        // Verify the update actually saved
+        var verify = await _supabase.from('profiles').select('full_name,university,faculty').eq('id', user.id).single();
+        if (verify.error || !verify.data || verify.data.university !== university) {
+          showAlert('profileAlert', '⚠️ Changes may not have saved. Please check your internet and try again.');
+          return;
+        }
 
         // Update nav name
         document.getElementById('navAvatar').textContent        = fullName.charAt(0).toUpperCase();
