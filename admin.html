@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — DentalEd Year 3</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Admin Layout ── */
+    .admin-layout { display:flex; min-height:100vh; }
+    .admin-sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--bg-nav);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 100; overflow-y: auto;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand-icon { font-size: 1.4rem; }
+    .sidebar-brand-text { font-family: var(--font-display); font-weight: 700; font-size: .95rem; color: var(--text-primary); }
+    .sidebar-brand-sub  { font-size: .7rem; color: var(--accent); font-weight: 600; }
+    .sidebar-nav { padding: 10px 8px; flex: 1; }
+    .sidebar-section-label {
+      font-size: .65rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      padding: 12px 10px 6px;
+    }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: var(--r-sm);
+      font-size: .85rem; font-weight: 500; color: var(--text-secondary);
+      cursor: pointer; transition: all .15s; margin-bottom: 2px;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .sidebar-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .sidebar-link.active { background: var(--accent-bg); color: var(--accent); }
+    .sidebar-link .s-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer {
+      padding: 14px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .admin-content {
+      margin-left: 240px; flex: 1;
+      padding: 28px 32px;
+      max-width: 1100px;
+    }
+    /* ── Panels ── */
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+    .panel-header { margin-bottom: 24px; }
+    .panel-header h2 {
+      font-family: var(--font-display); font-size: 1.35rem; font-weight: 700;
+      color: var(--text-primary); margin-bottom: 4px;
+    }
+    .panel-header p { font-size: .85rem; color: var(--text-secondary); }
+    /* ── Cards ── */
+    .admin-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 20px; margin-bottom: 20px;
+    }
+    .admin-card-title {
+      font-family: var(--font-display); font-weight: 700; font-size: .95rem;
+      color: var(--text-primary); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-tile {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 18px 16px;
+    }
+    .stat-tile-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .stat-tile-value { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
+    .stat-tile-sub   { font-size: .75rem; color: var(--text-secondary); margin-top: 4px; }
+    /* ── Table ── */
+    .admin-table-wrap { overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .admin-table th {
+      text-align: left; padding: 10px 12px;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); border-bottom: 1px solid var(--border);
+    }
+    .admin-table td { padding: 11px 12px; border-bottom: 1px solid rgba(37,42,58,.5); vertical-align: middle; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: var(--bg-hover); }
+    .tbl-badge {
+      display: inline-flex; align-items: center; padding: 3px 9px;
+      border-radius: 99px; font-size: .72rem; font-weight: 600;
+    }
+    .tbl-badge.active  { background: var(--green-bg);  color: var(--green); }
+    .tbl-badge.banned  { background: var(--red-bg);    color: var(--red); }
+    .tbl-badge.admin   { background: var(--accent-bg); color: var(--accent); }
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; border: none; font-family: var(--font-body); }
+    .btn-primary  { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #3a7ef5; }
+    .btn-danger   { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
+    .btn-danger:hover  { background: var(--red); color: #fff; }
+    .btn-warning  { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(251,191,36,.2); }
+    .btn-warning:hover { background: var(--yellow); color: #0d0f14; }
+    .btn-sm { padding: 5px 10px; font-size: .78rem; }
+    .btn-ghost { background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text-primary); border-color: var(--border-hover); }
+    .btn-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .btn-green:hover { background: var(--green); color: #fff; }
+    /* ── Search bar ── */
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-input); border: 1.5px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px 12px; margin-bottom: 16px;
+    }
+    .search-bar input { background: none; border: none; outline: none; color: var(--text-primary); font-size: .88rem; flex: 1; font-family: var(--font-body); }
+    .search-bar input::placeholder { color: var(--text-muted); }
+    /* ── Form fields ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.col1 { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-group label { font-size: .73rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--bg-input); border: 1.5px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text-primary);
+      font-family: var(--font-body); font-size: .88rem; padding: 9px 12px;
+      outline: none; transition: border-color .2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,.12); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-actions { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-xl); padding: 28px; width: 100%; max-width: 480px;
+    }
+    .modal-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 18px; }
+    /* ── Log ── */
+    .log-item {
+      display: flex; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid rgba(37,42,58,.4);
+      font-size: .83rem;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-time  { color: var(--text-muted); white-space: nowrap; font-size: .75rem; min-width: 110px; }
+    .log-action { color: var(--text-primary); flex: 1; }
+    .log-action span { color: var(--text-secondary); }
+    /* ── Subject selector ── */
+    .subject-select-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-bottom: 14px;
+    }
+    .subject-chip {
+      padding: 8px 12px; border-radius: var(--r-sm); font-size: .8rem; font-weight: 500;
+      border: 1.5px solid var(--border); background: var(--bg-input);
+      color: var(--text-secondary); cursor: pointer; transition: all .15s; text-align: center;
+    }
+    .subject-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 240px; }
+    /* ── Toggle switch ── */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid rgba(37,42,58,.4);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: .88rem; color: var(--text-primary); font-weight: 500; }
+    .toggle-desc  { font-size: .76rem; color: var(--text-muted); margin-top: 2px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--bg-hover);
+      border-radius: 99px; cursor: pointer; transition: background .2s;
+      border: 1px solid var(--border);
+    }
+    .toggle-slider:before {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; left: 2px; top: 2px;
+      background: var(--text-muted); border-radius: 50%; transition: .2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--green); border-color: var(--green); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); background: #fff; }
+    /* ── Question type badge ── */
+    .q-type { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .7rem; font-weight: 700; text-transform: uppercase; }
+    .q-type.mcq     { background: var(--accent-bg); color: var(--accent); }
+    .q-type.tf      { background: var(--teal-bg);   color: var(--teal); }
+    .q-type.written { background: var(--purple-bg); color: var(--purple); }
+    /* ── Tabs ── */
+    .admin-tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+    .admin-tab {
+      padding: 8px 16px; font-size: .83rem; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all .15s;
+    }
+    .admin-tab:hover  { color: var(--text-primary); }
+    .admin-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    /* ── Inline edit ── */
+    .inline-edit-row { display: flex; gap: 8px; align-items: center; }
+    .inline-edit-row input { flex: 1; }
+    /* ── Loading overlay ── */
+    #loadingOverlay {
+      position:fixed;inset:0;background:#0d0f14;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:16px;z-index:9999;transition:opacity .35s ease;
+    }
+    #loadingOverlay.hidden{opacity:0;pointer-events:none;}
+    .loading-tooth{font-size:2.8rem;animation:pulse 1.2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+    .loading-text{font-size:.88rem;color:#4a5068;font-family:'Inter',sans-serif;}
+    .loading-bar{width:120px;height:3px;background:#1a1e2a;border-radius:99px;overflow:hidden;}
+    .loading-bar-fill{height:100%;width:40%;background:linear-gradient(90deg,#2563eb,#4f8ef7);border-radius:99px;animation:slide 1.2s ease-in-out infinite;}
+    @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+    /* Responsive */
+    @media(max-width:768px) {
+      .admin-sidebar { width: 100%; height: auto; position: relative; }
+      .admin-content { margin-left: 0; padding: 16px; }
+      .admin-layout  { flex-direction: column; }
+      .form-grid     { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="loading-tooth">⚙️</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <div class="loading-text">Loading admin panel…</div>
+</div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">⚙️</div>
+      <div>
+        <div class="sidebar-brand-text">Admin Panel</div>
+        <div class="sidebar-brand-sub">DentalEd Year 3</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Overview</div>
+      <button class="sidebar-link active" data-panel="stats">
+        <span class="s-icon">📊</span> Statistics
+      </button>
+
+      <div class="sidebar-section-label">Management</div>
+      <button class="sidebar-link" data-panel="students">
+        <span class="s-icon">👥</span> Students
+      </button>
+      <button class="sidebar-link" data-panel="content">
+        <span class="s-icon">📚</span> Content
+      </button>
+      <button class="sidebar-link" data-panel="questions">
+        <span class="s-icon">❓</span> Questions
+      </button>
+      <button class="sidebar-link" data-panel="announcements">
+        <span class="s-icon">📢</span> Announcements
+      </button>
+
+      <div class="sidebar-section-label">System</div>
+      <button class="sidebar-link" data-panel="settings">
+        <span class="s-icon">⚙️</span> Site Settings
+      </button>
+      <button class="sidebar-link" data-panel="admins">
+        <span class="s-icon">🔐</span> Admin Management
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="./dashboard.html" style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);margin-bottom:10px">
+        ← Back to Dashboard
+      </a>
+      <button id="logoutBtn" class="btn btn-ghost" style="width:100%;justify-content:center">
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-content">
+
+    <!-- ══════════════ STATS ══════════════ -->
+    <div class="admin-panel active" id="panel-stats">
+      <div class="panel-header">
+        <h2>📊 Statistics</h2>
+        <p>Platform overview and usage data.</p>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-tile"><div class="stat-tile-label">Total Students</div><div class="stat-tile-value" id="statTotal">—</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Active Today</div><div class="stat-tile-value" id="statToday">—</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Total Content</div><div class="stat-tile-value" id="statContent">—</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Total Questions</div><div class="stat-tile-value" id="statQuestions">—</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Quiz Attempts</div><div class="stat-tile-value" id="statAttempts">—</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Announcements</div><div class="stat-tile-value" id="statAnn">—</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap">
+        <div class="admin-card">
+          <div class="admin-card-title">📈 Registrations (Last 14 Days)</div>
+          <div class="chart-wrap"><canvas id="regChart"></canvas></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title">🏆 Avg Score by Subject</div>
+          <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="admin-card" style="margin-top:0">
+        <div class="admin-card-title">📚 Questions per Subject</div>
+        <div class="chart-wrap"><canvas id="qChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ STUDENTS ══════════════ -->
+    <div class="admin-panel" id="panel-students">
+      <div class="panel-header">
+        <h2>👥 Student Management</h2>
+        <p>View, edit, ban, and export student accounts.</p>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="search-bar" style="flex:1;margin-bottom:0;min-width:200px">
+          <span>🔍</span>
+          <input type="text" id="studentSearch" placeholder="Search by name, email, student ID…" oninput="filterStudents()" />
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="exportStudentsCSV()">⬇️ Export CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadStudents()">🔄 Refresh</button>
+      </div>
+
+      <div id="studentsAlert" class="alert" style="margin-bottom:12px"></div>
+
+      <div class="admin-card" style="padding:0;overflow:hidden">
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Student ID</th>
+                <th>University</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTbody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ CONTENT ══════════════ -->
+    <div class="admin-panel" id="panel-content">
+      <div class="panel-header">
+        <h2>📚 Content Management</h2>
+        <p>Add, edit, or delete content for any subject.</p>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">➕ Add Content</div>
+        <div id="contentAlert" class="alert" style="margin-bottom:14px"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="cSubject">
+              <option value="oral-pathology">Oral Pathology</option>
+              <option value="general-surgery">General Surgery</option>
+              <option value="general-medicine">General Medicine</option>
+              <option value="conservative">Conservative Dentistry</option>
+              <option value="pedodontics">Pedodontics</option>
+              <option value="orthodontics">Orthodontics</option>
+              <option value="prosthodontics">Prosthodontics</option>
+              <option value="crown-bridge">Crown & Bridge</option>
+              <option value="prevention">Prevention & Community</option>
+              <option value="oral-medicine">Oral Medicine</option>
+              <option value="periodontology">Periodontology</option>
+              <option value="oral-surgery">Oral Surgery</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Section</label>
+            <select id="cSection">
+              <option value="previous_exams">Previous Exams</option>
+              <option value="midterm_quizzes">Midterm Quizzes</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Title</label>
+            <input type="text" id="cTitle" placeholder="Content title…" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="cType" onchange="onContentTypeChange()">
+              <option value="text">📝 Text</option>
+              <option value="image">🖼️ Image</option>
+              <option value="pdf">📄 PDF</option>
+            </select>
+          </div>
+          <div class="form-group" id="cSortGroup">
+            <label>Sort Order</label>
+            <input type="number" id="cSort" value="0" min="0" />
+          </div>
+          <div class="form-group full" id="cTextGroup">
+            <label>Text Content</label>
+            <textarea id="cText" placeholder="Enter text content…"></textarea>
+          </div>
+          <div class="form-group full" id="cFileGroup" style="display:none">
+            <label>File</label>
+            <input type="file" id="cFile" accept="image/*" style="padding:7px" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="cSubmitBtn" onclick="submitAddContent()">➕ Add Content</button>
+        </div>
+      </div>
+
+      <!-- Content list -->
+      <div class="admin-card">
+        <div class="admin-card-title" style="justify-content:space-between">
+          <span>📋 Browse Content</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="browseSubject" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-size:.78rem;padding:5px 8px;border-radius:var(--r-sm);outline:none" onchange="loadContentList()">
+              <option value="oral-pathology">Oral Pathology</option>
+              <option value="general-surgery">General Surgery</option>
+              <option value="general-medicine">General Medicine</option>
+              <option value="conservative">Conservative</option>
+              <option value="pedodontics">Pedodontics</option>
+              <option value="orthodontics">Orthodontics</option>
+              <option value="prosthodontics">Prosthodontics</option>
+              <option value="crown-bridge">Crown & Bridge</option>
+              <option value="prevention">Prevention</option>
+              <option value="oral-medicine">Oral Medicine</option>
+              <option value="periodontology">Periodontology</option>
+              <option value="oral-surgery">Oral Surgery</option>
+            </select>
+            <select id="browseSection" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-size:.78rem;padding:5px 8px;border-radius:var(--r-sm);outline:none" onchange="loadContentList()">
+              <option value="previous_exams">Previous Exams</option>
+              <option value="midterm_quizzes">Midterm Quizzes</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadContentList()">Load</button>
+          </div>
+        </div>
+        <div id="contentList" style="min-height:60px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ QUESTIONS ══════════════ -->
+    <div class="admin-panel" id="panel-questions">
+      <div class="panel-header">
+        <h2>❓ Question Management</h2>
+        <p>Add, edit, delete questions. Import from Excel.</p>
+      </div>
+
+      <div class="admin-tabs">
+        <div class="admin-tab active" onclick="switchQTab('add',this)">➕ Add Question</div>
+        <div class="admin-tab" onclick="switchQTab('browse',this)">📋 Browse</div>
+        <div class="admin-tab" onclick="switchQTab('import',this)">📥 Import Excel</div>
+      </div>
+
+      <!-- Add Question -->
+      <div id="qtab-add">
+        <div class="admin-card">
+          <div id="qAlert" class="alert" style="margin-bottom:14px"></div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Subject</label>
+              <select id="qSubject">
+                <option value="oral-pathology">Oral Pathology</option>
+                <option value="general-surgery">General Surgery</option>
+                <option value="general-medicine">General Medicine</option>
+                <option value="conservative">Conservative Dentistry</option>
+                <option value="pedodontics">Pedodontics</option>
+                <option value="orthodontics">Orthodontics</option>
+                <option value="prosthodontics">Prosthodontics</option>
+                <option value="crown-bridge">Crown & Bridge</option>
+                <option value="prevention">Prevention</option>
+                <option value="oral-medicine">Oral Medicine</option>
+                <option value="periodontology">Periodontology</option>
+                <option value="oral-surgery">Oral Surgery</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Section</label>
+              <select id="qSection">
+                <option value="previous_exams">Previous Exams</option>
+                <option value="midterm_quizzes">Midterm Quizzes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="qType" onchange="onQTypeChange()">
+                <option value="mcq">MCQ</option>
+                <option value="tf">True / False</option>
+                <option value="written">Written</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Sort Order</label>
+              <input type="number" id="qSort" value="0" min="0" />
+            </div>
+            <div class="form-group full">
+              <label>Question</label>
+              <textarea id="qText" placeholder="Enter the question…"></textarea>
+            </div>
+            <div id="mcqOptions" class="form-group full">
+              <label>Options (MCQ)</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input type="text" id="qOptA" placeholder="A) Option A" />
+                <input type="text" id="qOptB" placeholder="B) Option B" />
+                <input type="text" id="qOptC" placeholder="C) Option C" />
+                <input type="text" id="qOptD" placeholder="D) Option D" />
+              </div>
+            </div>
+            <div class="form-group" id="qCorrectGroup">
+              <label>Correct Answer</label>
+              <select id="qCorrect">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>Explanation (optional)</label>
+              <textarea id="qExplanation" placeholder="Explain the correct answer…" style="min-height:60px"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="qSubmitBtn" onclick="submitAddQuestion()">➕ Add Question</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Browse Questions -->
+      <div id="qtab-browse" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <select id="qBrowseSubject" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-size:.82rem;padding:7px 10px;border-radius:var(--r-sm);outline:none">
+            <option value="oral-pathology">Oral Pathology</option>
+            <option value="general-surgery">General Surgery</option>
+            <option value="general-medicine">General Medicine</option>
+            <option value="conservative">Conservative</option>
+            <option value="pedodontics">Pedodontics</option>
+            <option value="orthodontics">Orthodontics</option>
+            <option value="prosthodontics">Prosthodontics</option>
+            <option value="crown-bridge">Crown & Bridge</option>
+            <option value="prevention">Prevention</option>
+            <option value="oral-medicine">Oral Medicine</option>
+            <option value="periodontology">Periodontology</option>
+            <option value="oral-surgery">Oral Surgery</option>
+          </select>
+          <select id="qBrowseSection" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-secondary);font-size:.82rem;padding:7px 10px;border-radius:var(--r-sm);outline:none">
+            <option value="previous_exams">Previous Exams</option>
+            <option value="midterm_quizzes">Midterm Quizzes</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="loadQList()">Load</button>
+        </div>
+        <div id="qList"></div>
+      </div>
+
+      <!-- Import Excel -->
+      <div id="qtab-import" style="display:none">
+        <div class="admin-card">
+          <div class="admin-card-title">📥 Import Questions from Excel</div>
+          <p style="font-size:.83rem;color:var(--text-secondary);margin-bottom:16px">
+            Excel file must have columns: <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px">subject_id, section, type, question, option_a, option_b, option_c, option_d, correct, explanation</code>
+          </p>
+          <div style="margin-bottom:12px">
+            <a href="#" onclick="downloadQTemplate()" style="font-size:.82rem;color:var(--accent)">⬇️ Download template</a>
+          </div>
+          <div id="importAlert" class="alert" style="margin-bottom:12px"></div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>Excel File (.xlsx / .csv)</label>
+            <input type="file" id="importFile" accept=".xlsx,.csv" style="padding:7px" />
+          </div>
+          <button class="btn btn-primary" onclick="importQuestions()">📥 Import</button>
+          <div id="importPreview" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ ANNOUNCEMENTS ══════════════ -->
+    <div class="admin-panel" id="panel-announcements">
+      <div class="panel-header">
+        <h2>📢 Announcement Management</h2>
+        <p>Post, schedule, and manage announcements.</p>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">➕ New Announcement</div>
+        <div id="annAlert" class="alert" style="margin-bottom:14px"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="annType">
+              <option value="info">💬 Info</option>
+              <option value="success">✅ Success</option>
+              <option value="warning">⚠️ Warning</option>
+              <option value="urgent">🚨 Urgent</option>
+            </select>
+          </div>
+          <div class="form-group" style="justify-content:flex-end;padding-top:18px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;text-transform:none;letter-spacing:0;color:var(--text-secondary)">
+              <input type="checkbox" id="annPinned" style="width:16px;height:16px;accent-color:var(--green)"> 📌 Pin to top
+            </label>
+          </div>
+          <div class="form-group full">
+            <label>Title</label>
+            <input type="text" id="annTitle" placeholder="Announcement title…" />
+          </div>
+          <div class="form-group full">
+            <label>Message</label>
+            <textarea id="annBody" placeholder="Write the announcement…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Schedule (optional — show from)</label>
+            <input type="datetime-local" id="annScheduled" />
+          </div>
+          <div class="form-group">
+            <label>Expires At (optional)</label>
+            <input type="datetime-local" id="annExpires" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="annSubmitBtn" onclick="submitAnnouncement()">📢 Post Announcement</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" style="justify-content:space-between">
+          <span>📋 All Announcements</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadAnnList()">🔄 Refresh</button>
+        </div>
+        <div id="annList"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ SETTINGS ══════════════ -->
+    <div class="admin-panel" id="panel-settings">
+      <div class="panel-header">
+        <h2>⚙️ Site Settings</h2>
+        <p>Control global platform behavior.</p>
+      </div>
+
+      <div class="admin-card">
+        <div id="settingsAlert" class="alert" style="margin-bottom:16px"></div>
+        <div class="form-grid col1">
+          <div class="form-group">
+            <label>Site Name</label>
+            <input type="text" id="setSiteName" placeholder="DentalEd Year 3" />
+          </div>
+          <div class="form-group">
+            <label>Welcome Message (shown on dashboard)</label>
+            <textarea id="setWelcome" placeholder="Welcome message for students…"></textarea>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;margin-bottom:8px;font-size:.73rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Toggles</div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">New Registrations</div>
+            <div class="toggle-desc">Allow new students to sign up</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setRegEnabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Maintenance Mode</div>
+            <div class="toggle-desc">Show maintenance message to all students</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setMaintenance" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label>Maintenance Message</label>
+          <textarea id="setMainMsg" placeholder="We'll be back soon…"></textarea>
+        </div>
+
+        <div class="form-actions" style="margin-top:20px">
+          <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ ADMINS ══════════════ -->
+    <div class="admin-panel" id="panel-admins">
+      <div class="panel-header">
+        <h2>🔐 Admin Management</h2>
+        <p>Add secondary admins and view activity log.</p>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">➕ Add Admin</div>
+        <p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:14px">
+          The user must already have a registered account. This promotes their role to admin.
+        </p>
+        <div id="addAdminAlert" class="alert" style="margin-bottom:12px"></div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>User Email</label>
+            <input type="email" id="newAdminEmail" placeholder="student@example.com" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addAdmin()">🔐 Make Admin</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" style="justify-content:space-between">
+          <span>📜 Current Admins</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadAdminList()">🔄 Refresh</button>
+        </div>
+        <div id="adminList">
+          <div style="color:var(--text-muted);font-size:.85rem">Loading…</div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" style="justify-content:space-between">
+          <span>📜 Activity Log</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadActivityLog()">🔄 Refresh</button>
+        </div>
+        <div id="activityLog">
+          <div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── MODALS ── -->
+<!-- Edit Student Modal -->
+<div class="modal-overlay hidden" id="editStudentModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Student</div>
+    <div id="editStudentAlert" class="alert" style="margin-bottom:12px"></div>
+    <input type="hidden" id="editStudentId" />
+    <div class="form-grid col1" style="gap:10px">
+      <div class="form-group"><label>Full Name</label><input type="text" id="editName" /></div>
+      <div class="form-group"><label>Student ID</label><input type="text" id="editStudentIdField" /></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="editPhone" /></div>
+      <div class="form-group"><label>University</label><input type="text" id="editUniv" /></div>
+      <div class="form-group"><label>Faculty</label><input type="text" id="editFaculty" /></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveStudentEdit()">💾 Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('editStudentModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ban Student Modal -->
+<div class="modal-overlay hidden" id="banStudentModal">
+  <div class="modal-box">
+    <div class="modal-title">🚫 Ban Student</div>
+    <input type="hidden" id="banStudentId" />
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Reason (optional)</label>
+      <textarea id="banReason" placeholder="Reason for banning…"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger" onclick="confirmBan()">🚫 Ban</button>
+      <button class="btn btn-ghost" onclick="closeModal('banStudentModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div class="modal-overlay hidden" id="editQModal">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-title">✏️ Edit Question</div>
+    <div id="editQAlert" class="alert" style="margin-bottom:12px"></div>
+    <input type="hidden" id="editQId" />
+    <div class="form-grid col1" style="gap:10px">
+      <div class="form-group"><label>Question</label><textarea id="editQText"></textarea></div>
+      <div id="editMcqWrap">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input type="text" id="editQA" placeholder="A)" />
+          <input type="text" id="editQB" placeholder="B)" />
+          <input type="text" id="editQC" placeholder="C)" />
+          <input type="text" id="editQD" placeholder="D)" />
+        </div>
+        <div class="form-group"><label>Correct</label>
+          <select id="editQCorrect">
+            <option value="A">A</option><option value="B">B</option>
+            <option value="C">C</option><option value="D">D</option>
+            <option value="True">True</option><option value="False">False</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Explanation</label><textarea id="editQExp" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveQEdit()">💾 Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('editQModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div class="modal-overlay hidden" id="editAnnModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Announcement</div>
+    <div id="editAnnAlert" class="alert" style="margin-bottom:12px"></div>
+    <input type="hidden" id="editAnnId" />
+    <div class="form-grid col1" style="gap:10px">
+      <div class="form-group"><label>Title</label><input type="text" id="editAnnTitle" /></div>
+      <div class="form-group"><label>Message</label><textarea id="editAnnBody"></textarea></div>
+      <div class="form-group"><label>Type</label>
+        <select id="editAnnType">
+          <option value="info">💬 Info</option>
+          <option value="success">✅ Success</option>
+          <option value="warning">⚠️ Warning</option>
+          <option value="urgent">🚨 Urgent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;color:var(--text-secondary);font-size:.85rem">
+          <input type="checkbox" id="editAnnPinned" style="width:16px;height:16px;accent-color:var(--green)"> 📌 Pinned
+        </label>
+      </div>
+      <div class="form-group"><label>Expires At</label><input type="datetime-local" id="editAnnExpires" /></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveAnnEdit()">💾 Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('editAnnModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase.js"></script>
+<script src="./app.js"></script>
+<script>
+var SUBJECTS = [
+  {id:'oral-pathology',name:'Oral Pathology'},
+  {id:'general-surgery',name:'General Surgery'},
+  {id:'general-medicine',name:'General Medicine'},
+  {id:'conservative',name:'Conservative Dentistry'},
+  {id:'pedodontics',name:'Pedodontics'},
+  {id:'orthodontics',name:'Orthodontics'},
+  {id:'prosthodontics',name:'Prosthodontics'},
+  {id:'crown-bridge',name:'Crown & Bridge'},
+  {id:'prevention',name:'Prevention & Community'},
+  {id:'oral-medicine',name:'Oral Medicine'},
+  {id:'periodontology',name:'Periodontology'},
+  {id:'oral-surgery',name:'Oral Surgery'}
+];
+
+var currentAdminUser = null;
+var allStudents = [];
+var regChart = null, scoreChart = null, qChart = null;
+
+// ── Init ─────────────────────────────────────────────────────
+(async function() {
+  var session = await requireAuth();
+  if (!session) return;
+
+  if (!isAdmin(session.user)) {
+    window.location.href = './dashboard.html';
+    return;
+  }
+
+  currentAdminUser = session.user;
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  // Sidebar nav
+  document.querySelectorAll('.sidebar-link').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sidebar-link').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.admin-panel').forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      var panelId = 'panel-' + btn.dataset.panel;
+      var panel = document.getElementById(panelId);
+      if (panel) panel.classList.add('active');
+      // Lazy load on first open
+      if (btn.dataset.panel === 'stats')         loadStats();
+      if (btn.dataset.panel === 'students')       loadStudents();
+      if (btn.dataset.panel === 'announcements')  loadAnnList();
+      if (btn.dataset.panel === 'settings')       loadSettings();
+      if (btn.dataset.panel === 'admins')         { loadAdminList(); loadActivityLog(); }
+    });
+  });
+
+  await loadStats();
+
+  var overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('hidden');
+  setTimeout(function(){ overlay.remove(); }, 400);
+})();
+
+// ── Modal helpers ────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.add('hidden');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════
+async function loadStats() {
+  var [students, content, questions, attempts, announcements] = await Promise.all([
+    _supabase.from('profiles').select('id,created_at', { count: 'exact' }),
+    _supabase.from('subject_content').select('id', { count: 'exact' }),
+    _supabase.from('questions').select('id,subject_id', { count: 'exact' }),
+    _supabase.from('quiz_attempts').select('id,subject_id,score,total,created_at', { count: 'exact' }),
+    _supabase.from('announcements').select('id', { count: 'exact' })
+  ]);
+
+  var total = students.count || 0;
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statContent').textContent   = content.count || 0;
+  document.getElementById('statQuestions').textContent = questions.count || 0;
+  document.getElementById('statAttempts').textContent  = attempts.count || 0;
+  document.getElementById('statAnn').textContent       = announcements.count || 0;
+
+  // Active today (registered today as proxy — real active needs last_sign_in from auth.users which needs service role)
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayCount = (students.data || []).filter(function(s){
+    return new Date(s.created_at) >= today;
+  }).length;
+  document.getElementById('statToday').textContent = todayCount;
+
+  // Registration chart (last 14 days)
+  buildRegChart(students.data || []);
+
+  // Questions per subject chart
+  buildQChart(questions.data || []);
+
+  // Avg score per subject
+  buildScoreChart(attempts.data || []);
+}
+
+function buildRegChart(data) {
+  var days = [];
+  var counts = [];
+  for (var i = 13; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    d.setHours(0,0,0,0);
+    var label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    var next  = new Date(d); next.setDate(next.getDate() + 1);
+    var c = data.filter(function(s){
+      var t = new Date(s.created_at);
+      return t >= d && t < next;
+    }).length;
+    days.push(label);
+    counts.push(c);
+  }
+  var ctx = document.getElementById('regChart').getContext('2d');
+  if (regChart) regChart.destroy();
+  regChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: days,
+      datasets: [{ label: 'Registrations', data: counts, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.15)', fill: true, tension: .4, pointRadius: 3 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+      x: { ticks: { color: '#8b93aa', font: { size: 10 } }, grid: { color: 'rgba(37,42,58,.5)' } },
+      y: { ticks: { color: '#8b93aa', font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(37,42,58,.5)' }, beginAtZero: true }
+    }}
+  });
+}
+
+function buildQChart(data) {
+  var counts = {};
+  SUBJECTS.forEach(function(s){ counts[s.id] = 0; });
+  (data || []).forEach(function(q){ if (counts[q.subject_id] !== undefined) counts[q.subject_id]++; });
+  var labels = SUBJECTS.map(function(s){ return s.name.split(' ')[0]; });
+  var values = SUBJECTS.map(function(s){ return counts[s.id]; });
+  var ctx = document.getElementById('qChart').getContext('2d');
+  if (qChart) qChart.destroy();
+  qChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label: 'Questions', data: values, backgroundColor: 'rgba(79,142,247,.7)', borderRadius: 5 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+      x: { ticks: { color: '#8b93aa', font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: '#8b93aa', font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(37,42,58,.5)' }, beginAtZero: true }
+    }}
+  });
+}
+
+function buildScoreChart(data) {
+  var sums = {}; var cnts = {};
+  SUBJECTS.forEach(function(s){ sums[s.id] = 0; cnts[s.id] = 0; });
+  (data || []).forEach(function(a){
+    if (sums[a.subject_id] !== undefined && a.total > 0) {
+      sums[a.subject_id] += (a.score / a.total) * 100;
+      cnts[a.subject_id]++;
+    }
+  });
+  var labels = SUBJECTS.map(function(s){ return s.name.split(' ')[0]; });
+  var values = SUBJECTS.map(function(s){ return cnts[s.id] ? Math.round(sums[s.id] / cnts[s.id]) : 0; });
+  var ctx = document.getElementById('scoreChart').getContext('2d');
+  if (scoreChart) scoreChart.destroy();
+  scoreChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label: 'Avg %', data: values, backgroundColor: 'rgba(34,197,94,.7)', borderRadius: 5 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+      x: { ticks: { color: '#8b93aa', font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: '#8b93aa', font: { size: 10 } }, grid: { color: 'rgba(37,42,58,.5)' }, beginAtZero: true, max: 100 }
+    }}
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// STUDENTS
+// ═══════════════════════════════════════════════════════════
+async function loadStudents() {
+  var tbody = document.getElementById('studentsTbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px">Loading…</td></tr>';
+
+  var r = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
+  if (r.error) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--red);padding:20px">Error: ' + r.error.message + '</td></tr>';
+    return;
+  }
+  allStudents = r.data || [];
+  renderStudents(allStudents);
+}
+
+function renderStudents(list) {
+  var tbody = document.getElementById('studentsTbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px">No students found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(s) {
+    var date = new Date(s.created_at).toLocaleDateString('en-GB');
+    var badge = s.is_banned
+      ? '<span class="tbl-badge banned">Banned</span>'
+      : (s.role === 'admin' ? '<span class="tbl-badge admin">Admin</span>' : '<span class="tbl-badge active">Active</span>');
+    return '<tr>' +
+      '<td><strong>' + escHtml(s.full_name || '') + '</strong></td>' +
+      '<td style="color:var(--text-secondary);font-size:.8rem">' + escHtml(s.email || '') + '</td>' +
+      '<td style="font-family:monospace;font-size:.82rem">' + escHtml(s.student_id || '') + '</td>' +
+      '<td style="font-size:.82rem;color:var(--text-secondary)">' + escHtml((s.university || '').substring(0,20)) + '</td>' +
+      '<td style="font-size:.78rem;color:var(--text-muted)">' + date + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td><div style="display:flex;gap:4px;flex-wrap:wrap">' +
+        '<button class="btn btn-ghost btn-sm" onclick="openEditStudent(\'' + s.id + '\')">✏️</button>' +
+        (s.is_banned
+          ? '<button class="btn btn-green btn-sm" onclick="unbanStudent(\'' + s.id + '\')">✅ Unban</button>'
+          : '<button class="btn btn-warning btn-sm" onclick="openBanModal(\'' + s.id + '\')">🚫 Ban</button>') +
+        '<button class="btn btn-danger btn-sm" onclick="deleteStudent(\'' + s.id + '\',\'' + escHtml(s.full_name||'') + '\')">🗑️</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filterStudents() {
+  var q = document.getElementById('studentSearch').value.toLowerCase();
+  if (!q) { renderStudents(allStudents); return; }
+  renderStudents(allStudents.filter(function(s) {
+    return (s.full_name||'').toLowerCase().includes(q) ||
+           (s.email||'').toLowerCase().includes(q) ||
+           (s.student_id||'').toLowerCase().includes(q) ||
+           (s.university||'').toLowerCase().includes(q);
+  }));
+}
+
+function openEditStudent(id) {
+  var s = allStudents.find(function(x){ return x.id === id; });
+  if (!s) return;
+  document.getElementById('editStudentId').value       = s.id;
+  document.getElementById('editName').value            = s.full_name || '';
+  document.getElementById('editStudentIdField').value  = s.student_id || '';
+  document.getElementById('editPhone').value           = s.phone || '';
+  document.getElementById('editUniv').value            = s.university || '';
+  document.getElementById('editFaculty').value         = s.faculty || '';
+  hideAlert('editStudentAlert');
+  openModal('editStudentModal');
+}
+
+async function saveStudentEdit() {
+  var id      = document.getElementById('editStudentId').value;
+  var name    = document.getElementById('editName').value.trim();
+  var sid     = document.getElementById('editStudentIdField').value.trim();
+  var phone   = document.getElementById('editPhone').value.trim();
+  var univ    = document.getElementById('editUniv').value.trim();
+  var faculty = document.getElementById('editFaculty').value.trim();
+
+  if (!name || !sid || !univ || !faculty) {
+    showAlert('editStudentAlert', 'Please fill in all required fields.'); return;
+  }
+  var r = await _supabase.from('profiles').update({
+    full_name: name, student_id: sid,
+    phone: phone || null, university: univ, faculty: faculty
+  }).eq('id', id);
+
+  if (r.error) { showAlert('editStudentAlert', 'Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Edited student profile', 'student', id, name);
+  closeModal('editStudentModal');
+  await loadStudents();
+}
+
+function openBanModal(id) {
+  document.getElementById('banStudentId').value = id;
+  document.getElementById('banReason').value = '';
+  openModal('banStudentModal');
+}
+
+async function confirmBan() {
+  var id     = document.getElementById('banStudentId').value;
+  var reason = document.getElementById('banReason').value.trim();
+  var r = await _supabase.from('profiles').update({ is_banned: true, ban_reason: reason || null }).eq('id', id);
+  if (r.error) { alert('Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Banned student', 'student', id, reason || 'No reason given');
+  closeModal('banStudentModal');
+  await loadStudents();
+}
+
+async function unbanStudent(id) {
+  if (!confirm('Unban this student?')) return;
+  await _supabase.from('profiles').update({ is_banned: false, ban_reason: null }).eq('id', id);
+  await logAdminAction(currentAdminUser, 'Unbanned student', 'student', id, '');
+  await loadStudents();
+}
+
+async function deleteStudent(id, name) {
+  if (!confirm('Permanently delete student "' + name + '"? This cannot be undone.')) return;
+  await _supabase.from('profiles').delete().eq('id', id);
+  await logAdminAction(currentAdminUser, 'Deleted student', 'student', id, name);
+  await loadStudents();
+}
+
+function exportStudentsCSV() {
+  if (!allStudents.length) { alert('No students loaded. Click Refresh first.'); return; }
+  var headers = ['Full Name','Email','Student ID','Phone','University','Faculty','Academic Year','Joined','Status'];
+  var rows = allStudents.map(function(s) {
+    return [
+      s.full_name||'', s.email||'', s.student_id||'', s.phone||'',
+      s.university||'', s.faculty||'', s.academic_year||'',
+      new Date(s.created_at).toLocaleDateString('en-GB'),
+      s.is_banned ? 'Banned' : 'Active'
+    ].map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(',');
+  });
+  var csv = [headers.join(',')].concat(rows).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'students_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTENT
+// ═══════════════════════════════════════════════════════════
+function onContentTypeChange() {
+  var type = document.getElementById('cType').value;
+  document.getElementById('cTextGroup').style.display = type === 'text' ? 'block' : 'none';
+  document.getElementById('cFileGroup').style.display = (type === 'image' || type === 'pdf') ? 'block' : 'none';
+  var fi = document.getElementById('cFile');
+  if (fi) fi.accept = type === 'image' ? 'image/*' : '.pdf';
+}
+
+async function submitAddContent() {
+  var subject = document.getElementById('cSubject').value;
+  var section = document.getElementById('cSection').value;
+  var title   = document.getElementById('cTitle').value.trim();
+  var type    = document.getElementById('cType').value;
+  var sort    = parseInt(document.getElementById('cSort').value) || 0;
+  var btn     = document.getElementById('cSubmitBtn');
+
+  if (!title) { showAlert('contentAlert','Please enter a title.'); return; }
+
+  var restore = setLoading(btn, 'Saving…');
+  hideAlert('contentAlert');
+
+  var data = { subject_id: subject, section: section, title: title, type: type, sort_order: sort, created_by: currentAdminUser.id };
+
+  if (type === 'text') {
+    var txt = document.getElementById('cText').value.trim();
+    if (!txt) { restore(); showAlert('contentAlert','Please enter text content.'); return; }
+    data.content = txt;
+  } else {
+    var fi = document.getElementById('cFile');
+    if (!fi || !fi.files[0]) { restore(); showAlert('contentAlert','Please select a file.'); return; }
+    var file = fi.files[0];
+    var ext  = file.name.split('.').pop();
+    var path = subject + '/' + section + '/' + Date.now() + '.' + ext;
+    var up   = await _supabase.storage.from('content-files').upload(path, file, { upsert: false });
+    if (up.error) { restore(); showAlert('contentAlert','Upload failed: ' + up.error.message); return; }
+    data.file_url  = _supabase.storage.from('content-files').getPublicUrl(path).data.publicUrl;
+    data.file_name = file.name;
+  }
+
+  var r = await _supabase.from('subject_content').insert([data]);
+  restore();
+  if (r.error) { showAlert('contentAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Added content', 'content', null, title + ' → ' + subject);
+  showAlert('contentAlert','✅ Content added!','success');
+  document.getElementById('cTitle').value = '';
+  document.getElementById('cText').value  = '';
+  document.getElementById('cSort').value  = '0';
+}
+
+async function loadContentList() {
+  var subject = document.getElementById('browseSubject').value;
+  var section = document.getElementById('browseSection').value;
+  var wrap    = document.getElementById('contentList');
+  wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Loading…</div>';
+
+  var r = await _supabase.from('subject_content').select('*')
+    .eq('subject_id', subject).eq('section', section)
+    .order('sort_order').order('created_at', { ascending: false });
+
+  if (r.error || !r.data || !r.data.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">No content found.</div>';
+    return;
+  }
+
+  wrap.innerHTML = r.data.map(function(item) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(37,42,58,.4);gap:12px">' +
+      '<div>' +
+        '<span class="tbl-badge ' + (item.type==='text'?'active':item.type==='pdf'?'':'') + '" style="background:var(--accent-bg);color:var(--accent);margin-right:8px">' + item.type.toUpperCase() + '</span>' +
+        '<span style="font-size:.85rem;color:var(--text-primary)">' + escHtml(item.title) + '</span>' +
+        '<span style="font-size:.75rem;color:var(--text-muted);margin-left:8px">order:' + item.sort_order + '</span>' +
+      '</div>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteContentItem(\'' + item.id + '\',\'' + escHtml(item.subject_id) + '\',\'' + item.section + '\',\'' + (item.file_url||'') + '\',\'' + item.type + '\')">🗑️ Delete</button>' +
+    '</div>';
+  }).join('');
+}
+
+async function deleteContentItem(id, subject, section, fileUrl, type) {
+  if (!confirm('Delete this content item?')) return;
+  if ((type === 'image' || type === 'pdf') && fileUrl) {
+    var parts = fileUrl.split('/content-files/');
+    if (parts[1]) await _supabase.storage.from('content-files').remove([parts[1]]);
+  }
+  await _supabase.from('subject_content').delete().eq('id', id);
+  await logAdminAction(currentAdminUser, 'Deleted content', 'content', id, subject + '/' + section);
+  await loadContentList();
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUESTIONS
+// ═══════════════════════════════════════════════════════════
+function switchQTab(tab, el) {
+  document.querySelectorAll('.admin-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  ['add','browse','import'].forEach(function(t){
+    document.getElementById('qtab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'browse') loadQList();
+}
+
+function onQTypeChange() {
+  var type = document.getElementById('qType').value;
+  var mcq  = document.getElementById('mcqOptions');
+  var cg   = document.getElementById('qCorrectGroup');
+  var sel  = document.getElementById('qCorrect');
+
+  mcq.style.display = type === 'mcq' ? 'block' : 'none';
+  if (type === 'tf') {
+    sel.innerHTML = '<option value="True">True</option><option value="False">False</option>';
+    cg.style.display = 'block';
+  } else if (type === 'written') {
+    cg.style.display = 'none';
+  } else {
+    sel.innerHTML = '<option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>';
+    cg.style.display = 'block';
+  }
+}
+
+async function submitAddQuestion() {
+  var subject = document.getElementById('qSubject').value;
+  var section = document.getElementById('qSection').value;
+  var type    = document.getElementById('qType').value;
+  var text    = document.getElementById('qText').value.trim();
+  var sort    = parseInt(document.getElementById('qSort').value) || 0;
+  var btn     = document.getElementById('qSubmitBtn');
+
+  if (!text) { showAlert('qAlert','Please enter the question.'); return; }
+
+  var data = { subject_id: subject, section: section, type: type, question: text, sort_order: sort, created_by: currentAdminUser.id };
+
+  if (type === 'mcq') {
+    data.option_a = document.getElementById('qOptA').value.trim();
+    data.option_b = document.getElementById('qOptB').value.trim();
+    data.option_c = document.getElementById('qOptC').value.trim();
+    data.option_d = document.getElementById('qOptD').value.trim();
+    data.correct  = document.getElementById('qCorrect').value;
+    if (!data.option_a || !data.option_b) { showAlert('qAlert','Please enter at least options A and B.'); return; }
+  } else if (type === 'tf') {
+    data.correct = document.getElementById('qCorrect').value;
+  } else {
+    data.correct = 'written';
+  }
+  data.explanation = document.getElementById('qExplanation').value.trim() || null;
+
+  var restore = setLoading(btn, 'Saving…');
+  hideAlert('qAlert');
+  var r = await _supabase.from('questions').insert([data]);
+  restore();
+  if (r.error) { showAlert('qAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Added question', 'question', null, subject + ' / ' + type);
+  showAlert('qAlert','✅ Question added!','success');
+  document.getElementById('qText').value        = '';
+  document.getElementById('qExplanation').value = '';
+}
+
+async function loadQList() {
+  var subject = document.getElementById('qBrowseSubject').value;
+  var section = document.getElementById('qBrowseSection').value;
+  var wrap    = document.getElementById('qList');
+  wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Loading…</div>';
+
+  var r = await _supabase.from('questions').select('*')
+    .eq('subject_id', subject).eq('section', section)
+    .order('sort_order').order('created_at');
+
+  if (r.error || !r.data || !r.data.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">No questions found.</div>';
+    return;
+  }
+
+  wrap.innerHTML = r.data.map(function(q, i) {
+    return '<div style="padding:12px 0;border-bottom:1px solid rgba(37,42,58,.4)">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">' +
+        '<div style="flex:1">' +
+          '<span class="q-type ' + q.type + '">' + q.type.toUpperCase() + '</span> ' +
+          '<span style="font-size:.85rem;color:var(--text-primary);margin-left:6px">' + escHtml(q.question.substring(0,80)) + (q.question.length>80?'…':'') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px">' +
+          '<button class="btn btn-ghost btn-sm" onclick="openEditQ(\'' + q.id + '\')">✏️</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteQuestion(\'' + q.id + '\',\'' + subject + '\',\'' + section + '\')">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function openEditQ(id) {
+  var r = await _supabase.from('questions').select('*').eq('id', id).single();
+  if (r.error || !r.data) { alert('Error loading question'); return; }
+  var q = r.data;
+  document.getElementById('editQId').value      = q.id;
+  document.getElementById('editQText').value    = q.question || '';
+  document.getElementById('editQA').value       = q.option_a || '';
+  document.getElementById('editQB').value       = q.option_b || '';
+  document.getElementById('editQC').value       = q.option_c || '';
+  document.getElementById('editQD').value       = q.option_d || '';
+  document.getElementById('editQCorrect').value = q.correct || 'A';
+  document.getElementById('editQExp').value     = q.explanation || '';
+  hideAlert('editQAlert');
+  openModal('editQModal');
+}
+
+async function saveQEdit() {
+  var id  = document.getElementById('editQId').value;
+  var r   = await _supabase.from('questions').update({
+    question:    document.getElementById('editQText').value.trim(),
+    option_a:    document.getElementById('editQA').value.trim() || null,
+    option_b:    document.getElementById('editQB').value.trim() || null,
+    option_c:    document.getElementById('editQC').value.trim() || null,
+    option_d:    document.getElementById('editQD').value.trim() || null,
+    correct:     document.getElementById('editQCorrect').value,
+    explanation: document.getElementById('editQExp').value.trim() || null
+  }).eq('id', id);
+  if (r.error) { showAlert('editQAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Edited question', 'question', id, '');
+  closeModal('editQModal');
+  loadQList();
+}
+
+async function deleteQuestion(id, subject, section) {
+  if (!confirm('Delete this question?')) return;
+  await _supabase.from('questions').delete().eq('id', id);
+  await logAdminAction(currentAdminUser, 'Deleted question', 'question', id, subject);
+  loadQList();
+}
+
+// Import CSV/Excel (CSV only via FileReader — no library needed)
+async function importQuestions() {
+  var file = document.getElementById('importFile').files[0];
+  if (!file) { showAlert('importAlert','Please select a file.'); return; }
+
+  var text = await file.text();
+  var lines = text.trim().split('\n');
+  if (lines.length < 2) { showAlert('importAlert','File appears empty.'); return; }
+
+  var headers = lines[0].split(',').map(function(h){ return h.trim().replace(/^"|"$/g,'').toLowerCase(); });
+  var required = ['subject_id','section','type','question','correct'];
+  for (var i=0;i<required.length;i++) {
+    if (!headers.includes(required[i])) { showAlert('importAlert','Missing column: ' + required[i]); return; }
+  }
+
+  var rows = [];
+  for (var j=1;j<lines.length;j++) {
+    var cols = lines[j].split(',').map(function(c){ return c.trim().replace(/^"|"$/g,''); });
+    var obj  = {};
+    headers.forEach(function(h, k){ obj[h] = cols[k] || ''; });
+    if (!obj.question || !obj.subject_id) continue;
+    rows.push({
+      subject_id: obj.subject_id, section: obj.section || 'previous_exams',
+      type: obj.type || 'mcq', question: obj.question,
+      option_a: obj.option_a || null, option_b: obj.option_b || null,
+      option_c: obj.option_c || null, option_d: obj.option_d || null,
+      correct: obj.correct || 'A',
+      explanation: obj.explanation || null,
+      sort_order: 0, created_by: currentAdminUser.id
+    });
+  }
+
+  if (!rows.length) { showAlert('importAlert','No valid rows found.'); return; }
+
+  document.getElementById('importPreview').innerHTML =
+    '<div style="color:var(--text-secondary);font-size:.85rem;margin-bottom:8px">Preview: ' + rows.length + ' questions</div>' +
+    rows.slice(0,3).map(function(r){
+      return '<div style="font-size:.8rem;color:var(--text-muted);padding:4px 0">' + escHtml(r.subject_id) + ' — ' + escHtml(r.question.substring(0,60)) + '…</div>';
+    }).join('');
+
+  if (!confirm('Import ' + rows.length + ' questions?')) return;
+
+  var res = await _supabase.from('questions').insert(rows);
+  if (res.error) { showAlert('importAlert','Import error: ' + res.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Imported questions', 'question', null, rows.length + ' rows');
+  showAlert('importAlert','✅ Imported ' + rows.length + ' questions!','success');
+}
+
+function downloadQTemplate() {
+  var csv = 'subject_id,section,type,question,option_a,option_b,option_c,option_d,correct,explanation\n' +
+    'oral-pathology,previous_exams,mcq,What is the most common oral cancer?,Basal cell carcinoma,Squamous cell carcinoma,Melanoma,Fibrosarcoma,B,SCC accounts for >90% of oral cancers\n' +
+    'general-surgery,midterm_quizzes,tf,The appendix is located in the right iliac fossa.,,,,True,True,';
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'questions_template.csv';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANNOUNCEMENTS
+// ═══════════════════════════════════════════════════════════
+async function submitAnnouncement() {
+  var title     = document.getElementById('annTitle').value.trim();
+  var body      = document.getElementById('annBody').value.trim();
+  var type      = document.getElementById('annType').value;
+  var pinned    = document.getElementById('annPinned').checked;
+  var scheduled = document.getElementById('annScheduled').value;
+  var expires   = document.getElementById('annExpires').value;
+  var btn       = document.getElementById('annSubmitBtn');
+
+  if (!title || !body) { showAlert('annAlert','Please fill in title and message.'); return; }
+
+  var restore = setLoading(btn,'Posting…');
+  hideAlert('annAlert');
+
+  var data = {
+    title: title, body: body, type: type, pinned: pinned,
+    created_by: currentAdminUser.id,
+    scheduled_at: scheduled ? new Date(scheduled).toISOString() : null,
+    expires_at:   expires   ? new Date(expires).toISOString()   : null
+  };
+
+  var r = await _supabase.from('announcements').insert([data]);
+  restore();
+  if (r.error) { showAlert('annAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Posted announcement', 'announcement', null, title);
+  showAlert('annAlert','✅ Announcement posted!','success');
+  document.getElementById('annTitle').value = '';
+  document.getElementById('annBody').value  = '';
+  document.getElementById('annScheduled').value = '';
+  document.getElementById('annExpires').value   = '';
+  await loadAnnList();
+}
+
+async function loadAnnList() {
+  var wrap = document.getElementById('annList');
+  wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Loading…</div>';
+
+  var r = await _supabase.from('announcements').select('*')
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (r.error || !r.data || !r.data.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">No announcements yet.</div>';
+    return;
+  }
+
+  var ICONS = { info:'💬', success:'✅', warning:'⚠️', urgent:'🚨' };
+  wrap.innerHTML = r.data.map(function(a) {
+    var date = new Date(a.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    var sched = a.scheduled_at ? ' | 🕐 Scheduled: ' + new Date(a.scheduled_at).toLocaleString('en-GB') : '';
+    var exp   = a.expires_at   ? ' | ⏳ Expires: '   + new Date(a.expires_at).toLocaleString('en-GB')   : '';
+    var now   = new Date();
+    var expired = a.expires_at && new Date(a.expires_at) < now;
+    return '<div style="padding:14px 0;border-bottom:1px solid rgba(37,42,58,.4)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
+        '<div style="flex:1">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+            '<span>' + (ICONS[a.type]||'💬') + '</span>' +
+            '<strong style="font-size:.88rem">' + escHtml(a.title) + '</strong>' +
+            (a.pinned ? '<span style="font-size:.7rem;color:var(--yellow)">📌 Pinned</span>' : '') +
+            (expired  ? '<span style="font-size:.7rem;color:var(--text-muted)">⏳ Expired</span>' : '') +
+          '</div>' +
+          '<div style="font-size:.8rem;color:var(--text-secondary)">' + escHtml(a.body.substring(0,100)) + (a.body.length>100?'…':'') + '</div>' +
+          '<div style="font-size:.73rem;color:var(--text-muted);margin-top:4px">' + date + sched + exp + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0">' +
+          '<button class="btn btn-ghost btn-sm" onclick="openEditAnn(\'' + a.id + '\')">✏️</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteAnn(\'' + a.id + '\')">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function openEditAnn(id) {
+  var r = await _supabase.from('announcements').select('*').eq('id', id).single();
+  if (r.error || !r.data) { alert('Error loading announcement'); return; }
+  var a = r.data;
+  document.getElementById('editAnnId').value     = a.id;
+  document.getElementById('editAnnTitle').value  = a.title || '';
+  document.getElementById('editAnnBody').value   = a.body  || '';
+  document.getElementById('editAnnType').value   = a.type  || 'info';
+  document.getElementById('editAnnPinned').checked = a.pinned || false;
+  document.getElementById('editAnnExpires').value  = a.expires_at ? a.expires_at.substring(0,16) : '';
+  hideAlert('editAnnAlert');
+  openModal('editAnnModal');
+}
+
+async function saveAnnEdit() {
+  var id = document.getElementById('editAnnId').value;
+  var expires = document.getElementById('editAnnExpires').value;
+  var r = await _supabase.from('announcements').update({
+    title:   document.getElementById('editAnnTitle').value.trim(),
+    body:    document.getElementById('editAnnBody').value.trim(),
+    type:    document.getElementById('editAnnType').value,
+    pinned:  document.getElementById('editAnnPinned').checked,
+    expires_at: expires ? new Date(expires).toISOString() : null
+  }).eq('id', id);
+  if (r.error) { showAlert('editAnnAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Edited announcement', 'announcement', id, '');
+  closeModal('editAnnModal');
+  await loadAnnList();
+}
+
+async function deleteAnn(id) {
+  if (!confirm('Delete this announcement?')) return;
+  await _supabase.from('announcements').delete().eq('id', id);
+  await logAdminAction(currentAdminUser, 'Deleted announcement', 'announcement', id, '');
+  await loadAnnList();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════
+async function loadSettings() {
+  var r = await _supabase.from('site_settings').select('*').eq('id', 1).single();
+  if (r.error || !r.data) return;
+  var s = r.data;
+  document.getElementById('setSiteName').value     = s.site_name || '';
+  document.getElementById('setWelcome').value      = s.welcome_message || '';
+  document.getElementById('setRegEnabled').checked = s.registration_enabled !== false;
+  document.getElementById('setMaintenance').checked = s.maintenance_mode || false;
+  document.getElementById('setMainMsg').value      = s.maintenance_message || '';
+}
+
+async function saveSettings() {
+  var btn = document.getElementById('saveSettingsBtn');
+  var restore = setLoading(btn, 'Saving…');
+  hideAlert('settingsAlert');
+
+  var r = await _supabase.from('site_settings').update({
+    site_name:            document.getElementById('setSiteName').value.trim(),
+    welcome_message:      document.getElementById('setWelcome').value.trim(),
+    registration_enabled: document.getElementById('setRegEnabled').checked,
+    maintenance_mode:     document.getElementById('setMaintenance').checked,
+    maintenance_message:  document.getElementById('setMainMsg').value.trim(),
+    updated_at:           new Date().toISOString(),
+    updated_by:           currentAdminUser.id
+  }).eq('id', 1);
+
+  restore();
+  if (r.error) { showAlert('settingsAlert','Error: ' + r.error.message); return; }
+  await logAdminAction(currentAdminUser, 'Updated site settings', 'settings', '1', '');
+  showAlert('settingsAlert','✅ Settings saved!','success');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMINS
+// ═══════════════════════════════════════════════════════════
+async function addAdmin() {
+  var email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+  if (!email) { showAlert('addAdminAlert','Please enter an email.'); return; }
+
+  var r = await _supabase.from('profiles').update({ role: 'admin' }).eq('email', email);
+  if (r.error) { showAlert('addAdminAlert','Error: ' + r.error.message); return; }
+  // Note: RLS policies per email still need to be manually added in Supabase for true admin access
+  await logAdminAction(currentAdminUser, 'Added admin', 'admin', null, email);
+  showAlert('addAdminAlert','✅ Role updated! Note: Supabase RLS policies must also be updated for full admin access.','success');
+  document.getElementById('newAdminEmail').value = '';
+  await loadAdminList();
+}
+
+async function loadAdminList() {
+  var wrap = document.getElementById('adminList');
+  var r = await _supabase.from('profiles').select('full_name,email,role,created_at').eq('role','admin');
+  if (r.error || !r.data || !r.data.length) {
+    // Also show the primary admin
+    wrap.innerHTML = renderAdminRow({ full_name: 'Taha Cabello', email: ADMIN_EMAIL, role: 'superadmin', created_at: null });
+    return;
+  }
+  var rows = [{ full_name: 'Taha Cabello', email: ADMIN_EMAIL, role: 'superadmin', created_at: null }]
+    .concat(r.data.filter(function(a){ return a.email !== ADMIN_EMAIL; }));
+  wrap.innerHTML = rows.map(renderAdminRow).join('');
+}
+
+function renderAdminRow(a) {
+  return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(37,42,58,.4)">' +
+    '<div>' +
+      '<div style="font-size:.88rem;font-weight:600;color:var(--text-primary)">' + escHtml(a.full_name || a.email) + '</div>' +
+      '<div style="font-size:.75rem;color:var(--text-muted)">' + escHtml(a.email) + '</div>' +
+    '</div>' +
+    '<span class="tbl-badge ' + (a.role==='superadmin' ? 'active' : 'admin') + '">' + (a.role || 'admin') + '</span>' +
+  '</div>';
+}
+
+async function loadActivityLog() {
+  var wrap = document.getElementById('activityLog');
+  wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Loading…</div>';
+
+  var r = await _supabase.from('admin_log').select('*')
+    .order('created_at', { ascending: false }).limit(50);
+
+  if (r.error || !r.data || !r.data.length) {
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">No activity yet.</div>';
+    return;
+  }
+
+  wrap.innerHTML = r.data.map(function(log) {
+    var time = new Date(log.created_at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    return '<div class="log-item">' +
+      '<div class="log-time">' + time + '</div>' +
+      '<div class="log-action">' +
+        escHtml(log.action) +
+        (log.details ? ' <span>— ' + escHtml(log.details.substring(0,60)) + '</span>' : '') +
+        '<div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">' + escHtml(log.admin_email) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Inline admin log (needs to be available globally) ────────
+async function logAdminAction(adminUser, action, targetType, targetId, details) {
+  await _supabase.from('admin_log').insert([{
+    admin_id: adminUser.id,
+    admin_email: adminUser.email,
+    action: action,
+    target_type: targetType || null,
+    target_id: targetId ? String(targetId) : null,
+    details: details || null
+  }]);
+}
+</script>
+</body>
+</html>
