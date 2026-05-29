@@ -20,6 +20,17 @@
     .loading-bar-fill { height: 100%; width: 40%; background: linear-gradient(90deg,#2563eb,#4f8ef7); border-radius: 99px; animation: slide 1.2s ease-in-out infinite; }
     @keyframes slide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
   </style>
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#1a2744" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Dentix" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png" />
+  <link rel="apple-touch-icon" sizes="128x128" href="./icons/icon-128.png" />
 </head>
 <body>
 
@@ -288,5 +299,16 @@
   })();
   </script>
 
+
+  <!-- Register Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(r => console.log('SW registered:', r.scope))
+          .catch(e => console.warn('SW registration failed:', e));
+      });
+    }
+  </script>
 </body>
 </html>
