@@ -361,9 +361,8 @@
             avatarEl.insertBefore(img, avatarEl.firstChild);
             // Also update nav
             var navAv = document.getElementById('navAvatar');
-            navAv.style.backgroundImage = 'url(' + img.src + ')';
-            navAv.style.backgroundSize = 'cover';
-            navAv.textContent = '';
+            navAv.innerHTML = '<img src="' + img.src + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+            navAv.style.fontSize = '0';
           };
         }
       }
@@ -410,9 +409,8 @@
 
         // Update nav
         var navAv = document.getElementById('navAvatar');
-        navAv.style.backgroundImage = 'url(' + newImg.src + ')';
-        navAv.style.backgroundSize = 'cover';
-        navAv.textContent = '';
+        navAv.innerHTML = '<img src="' + newImg.src + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+        navAv.style.fontSize = '0';
 
         showAlert('profileAlert', '✅ Photo updated!', 'success');
       });
