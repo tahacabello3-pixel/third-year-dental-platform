@@ -231,7 +231,12 @@
       var user    = session.user;
       var profile = await fetchProfile(user.id);
       var name    = (profile && profile.full_name) ? profile.full_name : (user.email ? user.email.split('@')[0] : 'Student');
-      document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
+      var _navAv = document.getElementById('navAvatar');
+      if (_navAv) {
+        var _avUrl = profile && profile.avatar_url;
+        if (_avUrl) { _navAv.innerHTML = '<img src="' + _avUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />'; _navAv.style.fontSize = '0'; }
+        else { _navAv.textContent = name.charAt(0).toUpperCase(); _navAv.style.fontSize = ''; }
+      }
       document.getElementById('navName').textContent   = name.split(' ')[0];
 
       document.querySelectorAll('.subject-row').forEach(function(row, i) {
