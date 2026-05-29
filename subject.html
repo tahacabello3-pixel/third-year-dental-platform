@@ -242,12 +242,20 @@
       </div>
       <span class="bn-label">Profile</span>
     </a>
+    <a href="./admin.html" class="bn-item bn-admin" data-page="admin" style="display:none">
+      <div class="bn-icon-wrap">
+        <div class="bn-ripple"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span class="bn-dot"></span>
+      </div>
+      <span class="bn-label" style="color:var(--yellow)">Admin</span>
+    </a>
   </nav>
   <script>
   (function() {
     var path = window.location.pathname.split('/').pop() || 'dashboard.html';
     var page = path.replace('.html','');
-    if (['subject','quiz','admin'].indexOf(page) !== -1) page = 'subjects';
+    if (['subject','quiz'].indexOf(page) !== -1) page = 'subjects';
     var items = document.querySelectorAll('.bn-item');
     items.forEach(function(item) {
       if (item.dataset.page === page) item.classList.add('active');
@@ -256,6 +264,27 @@
         if (ripple) { ripple.classList.remove('animate'); void ripple.offsetWidth; ripple.classList.add('animate'); }
       });
     });
+    // Show admin item if admin — check Supabase session
+    if (window._supabase) {
+      _supabase.auth.getSession().then(function(r) {
+        if (r.data && r.data.session && r.data.session.user.email === 'tahacabello3@gmail.com') {
+          var adminItem = document.querySelector('.bn-admin');
+          if (adminItem) adminItem.style.display = 'flex';
+        }
+      });
+    } else {
+      // Fallback: try after scripts load
+      window.addEventListener('load', function() {
+        if (window._supabase) {
+          _supabase.auth.getSession().then(function(r) {
+            if (r.data && r.data.session && r.data.session.user.email === 'tahacabello3@gmail.com') {
+              var adminItem = document.querySelector('.bn-admin');
+              if (adminItem) adminItem.style.display = 'flex';
+            }
+          });
+        }
+      });
+    }
   })();
   </script>
 
