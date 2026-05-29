@@ -108,6 +108,13 @@ function initLoginPage() {
       showAlert('loginAlert', msg);
       return;
     }
+    // Check if banned
+    var banCheck = await checkBanStatus(r.data.user.id);
+    if (banCheck.banned) {
+      restore();
+      showAlert('loginAlert', '⛔ ' + banCheck.reason);
+      return;
+    }
     window.location.href = './dashboard.html';
   });
 }
@@ -337,4 +344,198 @@ function toggleTypeFields(type) {
   if (fileWrap) fileWrap.style.display = (type === 'image' || type === 'pdf') ? 'block' : 'none';
   var fileInput = document.getElementById('addFile');
   if (fileInput) fileInput.accept = type === 'image' ? 'image/*' : '.pdf';
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ANNOUNCEMENTS
+// ══════════════════════════════════════════════════════════
+
+var ANNOUNCE_ICONS = {
+  info:    'ℹ️',
+  success: '✅',
+  warning: '⚠️',
+  urgent:  '🚨'
+};
+
+// Load and render announcements in dashboard
+async function loadAnnouncements(adminMode) {
+  var section = document.getElementById('announcementsSection');
+  if (!section) return;
+
+  var r = await _supabase
+    .from('announcements')
+    .select('*')
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (r.error || !r.data || r.data.length === 0) {
+    // Show admin panel even if no announcements
+    if (adminMode) {
+      section.style.display = 'block';
+      section.innerHTML = buildAdminAnnouncePanel() + '<div style="color:var(--text-muted);font-size:.88rem;padding:8px 4px">No announcements yet.</div>';
+      bindAnnounceForm();
+    }
+    return;
+  }
+
+  section.style.display = 'block';
+  var html = adminMode ? buildAdminAnnouncePanel() : '';
+
+  r.data.forEach(function(a) {
+    var icon  = ANNOUNCE_ICONS[a.type] || 'ℹ️';
+    var date  = new Date(a.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    var delBtn = adminMode
+      ? '<button class="announcement-delete" onclick="deleteAnnouncement(\'' + a.id + '\')" title="Delete">✕</button>'
+      : '';
+    var pin = a.pinned ? '<span class="announcement-pin">📌 Pinned</span>' : '';
+
+    html +=
+      '<div class="announcement type-' + a.type + '">' +
+        '<div class="announcement-icon">' + icon + '</div>' +
+        '<div class="announcement-body">' +
+          '<div class="announcement-title">' + escHtml(a.title) + pin + '</div>' +
+          '<div class="announcement-text">' + escHtml(a.body).replace(/\n/g,'<br>') + '</div>' +
+          '<div class="announcement-date">' + date + '</div>' +
+        '</div>' +
+        delBtn +
+      '</div>';
+  });
+
+  section.innerHTML = html;
+  if (adminMode) bindAnnounceForm();
+}
+
+function buildAdminAnnouncePanel() {
+  return '<details class="announce-admin-panel" style="margin-bottom:16px">' +
+    '<summary><span class="admin-badge">Admin</span> Post Announcement</summary>' +
+    '<div id="announceAlert" class="alert" style="margin-top:14px;margin-bottom:0"></div>' +
+    '<form id="announceForm" novalidate>' +
+    '<div class="announce-form-grid">' +
+      '<div class="announce-form-group announce-full">' +
+        '<label>Title</label>' +
+        '<input type="text" id="aTitle" placeholder="e.g. Exam schedule updated" required />' +
+      '</div>' +
+      '<div class="announce-form-group announce-full">' +
+        '<label>Message</label>' +
+        '<textarea id="aBody" placeholder="Write your announcement here…" required></textarea>' +
+      '</div>' +
+      '<div class="announce-form-group">' +
+        '<label>Type</label>' +
+        '<select id="aType">' +
+          '<option value="info">ℹ️ Info</option>' +
+          '<option value="success">✅ Success</option>' +
+          '<option value="warning">⚠️ Warning</option>' +
+          '<option value="urgent">🚨 Urgent</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="announce-form-group" style="justify-content:flex-end;padding-top:18px">' +
+        '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;text-transform:none;letter-spacing:0;color:var(--text-secondary)">' +
+          '<input type="checkbox" id="aPinned" style="width:16px;height:16px;accent-color:var(--green)"> Pin to top' +
+        '</label>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:14px">' +
+      '<button type="submit" class="btn-admin-submit" id="announceSubmitBtn">📢 Post Announcement</button>' +
+    '</div>' +
+    '</form>' +
+  '</details>';
+}
+
+function bindAnnounceForm() {
+  var form = document.getElementById('announceForm');
+  if (!form) return;
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideAlert('announceAlert');
+
+    var title  = document.getElementById('aTitle').value.trim();
+    var body   = document.getElementById('aBody').value.trim();
+    var type   = document.getElementById('aType').value;
+    var pinned = document.getElementById('aPinned').checked;
+    var btn    = document.getElementById('announceSubmitBtn');
+
+    if (!title || !body) { showAlert('announceAlert', 'Please fill in title and message.'); return; }
+
+    var restore = setLoading(btn, 'Posting…');
+    var r = await _supabase.from('announcements').insert([{
+      title: title, body: body, type: type, pinned: pinned
+    }]);
+    restore();
+
+    if (r.error) { showAlert('announceAlert', 'Error: ' + r.error.message); return; }
+
+    form.reset();
+    // Get current user for admin check
+    var sess = await _supabase.auth.getSession();
+    await loadAnnouncements(sess.data.session ? isAdmin(sess.data.session.user) : false);
+  });
+}
+
+async function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement?')) return;
+  await _supabase.from('announcements').delete().eq('id', id);
+  var sess = await _supabase.auth.getSession();
+  await loadAnnouncements(sess.data.session ? isAdmin(sess.data.session.user) : false);
+}
+// ============================================================
+// ADMIN FUNCTIONS — أضف هذا في نهاية app.js
+// ============================================================
+
+// ── Admin Log Helper ─────────────────────────────────────────
+async function logAdminAction(adminUser, action, targetType, targetId, details) {
+  await _supabase.from('admin_log').insert([{
+    admin_id: adminUser.id,
+    admin_email: adminUser.email,
+    action: action,
+    target_type: targetType || null,
+    target_id: targetId ? String(targetId) : null,
+    details: details || null
+  }]);
+}
+
+// ── Check ban on login (call after signIn success in index.html) ──
+async function checkBanStatus(userId) {
+  var r = await _supabase.from('profiles').select('is_banned,ban_reason').eq('id', userId).single();
+  if (r.data && r.data.is_banned) {
+    await _supabase.auth.signOut();
+    return { banned: true, reason: r.data.ban_reason || 'Your account has been suspended.' };
+  }
+  return { banned: false };
+}
+
+// ── Site Settings ────────────────────────────────────────────
+async function getSiteSettings() {
+  var r = await _supabase.from('site_settings').select('*').eq('id', 1).single();
+  return r.error ? null : r.data;
+}
+async function saveSiteSettings(adminUser, data) {
+  var r = await _supabase.from('site_settings').update({
+    site_name: data.site_name,
+    registration_enabled: data.registration_enabled,
+    welcome_message: data.welcome_message,
+    maintenance_mode: data.maintenance_mode,
+    maintenance_message: data.maintenance_message,
+    updated_at: new Date().toISOString(),
+    updated_by: adminUser.id
+  }).eq('id', 1);
+  if (!r.error) {
+    await logAdminAction(adminUser, 'Updated site settings', 'settings', '1', JSON.stringify(data));
+  }
+  return r;
+}
+
+// ── Check maintenance (call at top of every protected page) ──
+async function checkMaintenance(isAdminUser) {
+  if (isAdminUser) return;
+  var s = await getSiteSettings();
+  if (s && s.maintenance_mode) {
+    document.body.innerHTML =
+      '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d0f14;color:#f0f2f8;font-family:Inter,sans-serif;text-align:center;padding:24px">' +
+      '<div style="font-size:3rem;margin-bottom:16px">🔧</div>' +
+      '<h2 style="font-size:1.4rem;font-weight:700;margin-bottom:10px">Under Maintenance</h2>' +
+      '<p style="color:#8b93aa;max-width:400px">' + escHtml(s.maintenance_message) + '</p>' +
+      '</div>';
+    throw new Error('maintenance');
+  }
 }
