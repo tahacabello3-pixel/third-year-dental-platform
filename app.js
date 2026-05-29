@@ -184,7 +184,16 @@ async function initSubjectPage() {
 
   var navAvatar = document.getElementById('navAvatar');
   var navName   = document.getElementById('navName');
-  if (navAvatar) navAvatar.textContent = name.charAt(0).toUpperCase();
+  if (navAvatar) {
+    var avatarUrl = profile && profile.avatar_url;
+    if (avatarUrl) {
+      navAvatar.innerHTML = '<img src="' + avatarUrl + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+      navAvatar.style.fontSize = '0';
+    } else {
+      navAvatar.textContent = name.charAt(0).toUpperCase();
+      navAvatar.style.fontSize = '';
+    }
+  }
   if (navName)   navName.textContent   = name.split(' ')[0];
 
   var adminPanel = document.getElementById('adminPanel');
