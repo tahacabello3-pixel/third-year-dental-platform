@@ -4,10 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel — DentalEd Year 3</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%234f8ef7' d='M12 2C8.5 2 6 5.5 6 8.5c0 2 .4 3.2.9 4.5L8 21h2.5l.5-4c.2-1.5.8-2 1-2s.8.5 1 2l.5 4H16l1.1-8C17.6 11.7 18 10.5 18 8.5 18 5.5 15.5 2 12 2z'/></svg>" />
   <link rel="stylesheet" href="./style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+
+    /* ── Enhanced Admin Styles ── */
+    .admin-sidebar {
+      background: linear-gradient(180deg, #0d1117 0%, #0f1520 100%) !important;
+    }
+    .sidebar-brand {
+      background: linear-gradient(135deg, rgba(79,142,247,.08), transparent);
+    }
+    .sidebar-link.active {
+      background: linear-gradient(135deg, rgba(79,142,247,.15), rgba(79,142,247,.08)) !important;
+      border-left: 2px solid #4f8ef7;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-hover)) !important;
+      border: 1px solid var(--border) !important;
+      transition: transform .2s, box-shadow .2s !important;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3) !important; }
+    .stat-value { font-size: 2rem !important; font-weight: 800 !important; }
+    .admin-content { background: var(--bg-base); min-height: 100vh; }
+    .panel-header h2 { font-size: 1.5rem !important; }
+    .s-icon svg { width: 16px; height: 16px; }
+
     /* ── Admin Layout ── */
     .admin-layout { display:flex; min-height:100vh; }
     .admin-sidebar {
@@ -259,7 +282,7 @@
   <!-- SIDEBAR -->
   <aside class="admin-sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">⚙️</div>
+      <div class="sidebar-brand-icon"><svg viewBox="0 0 24 24" fill="#4f8ef7" stroke="none" style="width:28px;height:28px"><path d="M12 2C8.5 2 6 5.5 6 8.5c0 2 .4 3.2.9 4.5L8 21h2.5l.5-4c.2-1.5.8-2 1-2s.8.5 1 2l.5 4H16l1.1-8C17.6 11.7 18 10.5 18 8.5 18 5.5 15.5 2 12 2z"/></svg></div>
       <div>
         <div class="sidebar-brand-text">Admin Panel</div>
         <div class="sidebar-brand-sub">DentalEd Year 3</div>
@@ -269,26 +292,26 @@
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Overview</div>
       <button class="sidebar-link active" data-panel="stats">
-        <span class="s-icon">📊</span> Statistics
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Statistics
       </button>
 
       <div class="sidebar-section-label">Management</div>
       <button class="sidebar-link" data-panel="students">
-        <span class="s-icon">👥</span> Students
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Students
       </button>
       <button class="sidebar-link" data-panel="content">
-        <span class="s-icon">📚</span> Content
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span> Content
       </button>
       <button class="sidebar-link" data-panel="questions">
-        <span class="s-icon">❓</span> Questions
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Questions
       </button>
       <button class="sidebar-link" data-panel="announcements">
-        <span class="s-icon">📢</span> Announcements
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span> Announcements
       </button>
 
       <div class="sidebar-section-label">System</div>
       <button class="sidebar-link" data-panel="settings">
-        <span class="s-icon">⚙️</span> Site Settings
+        <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Site Settings
       </button>
       <button class="sidebar-link" data-panel="admins">
         <span class="s-icon">🔐</span> Admin Management
@@ -311,7 +334,7 @@
     <!-- ══════════════ STATS ══════════════ -->
     <div class="admin-panel active" id="panel-stats">
       <div class="panel-header">
-        <h2>📊 Statistics</h2>
+        <h2>Statistics</h2>
         <p>Platform overview and usage data.</p>
       </div>
 
@@ -330,13 +353,13 @@
           <div class="chart-wrap"><canvas id="regChart"></canvas></div>
         </div>
         <div class="admin-card">
-          <div class="admin-card-title">🏆 Avg Score by Subject</div>
+          <div class="admin-card-title">Avg Score by Subject</div>
           <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
         </div>
       </div>
 
       <div class="admin-card" style="margin-top:0">
-        <div class="admin-card-title">📚 Questions per Subject</div>
+        <div class="admin-card-title">Questions per Subject</div>
         <div class="chart-wrap"><canvas id="qChart"></canvas></div>
       </div>
     </div>
@@ -669,7 +692,7 @@
     <!-- ══════════════ SETTINGS ══════════════ -->
     <div class="admin-panel" id="panel-settings">
       <div class="panel-header">
-        <h2>⚙️ Site Settings</h2>
+        <h2>Site Settings</h2>
         <p>Control global platform behavior.</p>
       </div>
 
