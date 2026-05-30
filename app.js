@@ -32,8 +32,18 @@ function isAdmin(user) {
 // ── Route guards ──────────────────────────────────────────────
 async function requireAuth() {
   var r = await _supabase.auth.getSession();
-  if (!r.data.session) { window.location.href = './index.html'; return null; }
+  if (!r.data.session) {
+    // Allow guest access
+    if (sessionStorage.getItem('dentaled_guest') === '1') {
+      return { user: { id: 'guest', email: 'guest@dentaled', isGuest: true }, isGuest: true };
+    }
+    window.location.href = './index.html'; return null;
+  }
   return r.data.session;
+}
+
+function isGuest() {
+  return sessionStorage.getItem('dentaled_guest') === '1';
 }
 async function redirectIfLoggedIn() {
   var r = await _supabase.auth.getSession();

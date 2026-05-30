@@ -86,6 +86,33 @@
   </nav>
 
   <main class="page-wrapper">
+    <!-- Guest Banner -->
+    <div id="guestBanner" style="display:none;
+      background:linear-gradient(135deg,#1a2030,#1e2840);
+      border:1px solid rgba(79,142,247,.25);
+      border-radius:14px; padding:16px 20px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;background:rgba(79,142,247,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div>
+          <div style="font-size:.88rem;font-weight:700;color:#e8eaf4">Browsing as Guest</div>
+          <div style="font-size:.75rem;color:#5a7ab0;margin-top:1px">Create an account to save progress</div>
+        </div>
+      </div>
+      <a href="./signup.html" style="
+        padding:8px 16px; background:#2563eb; color:#fff;
+        border-radius:8px; font-size:.8rem; font-weight:700;
+        text-decoration:none; white-space:nowrap;
+        transition:background .2s;"
+        onmouseover="this.style.background='#1d4ed8'"
+        onmouseout="this.style.background='#2563eb'">
+        Sign Up
+      </a>
+    </div>
+
 
     <!-- Announcements preview (pinned only) -->
     <div id="annPreview"></div>
@@ -247,6 +274,21 @@
       setTimeout(function(){ overlay.remove(); }, 400);
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
+      // Show guest banner
+      if (session && session.isGuest) {
+        var banner = document.getElementById('guestBanner');
+        if (banner) banner.style.display = 'flex';
+        document.getElementById('navName').textContent = 'Guest';
+        var navAv = document.getElementById('navAvatar');
+        if (navAv) navAv.textContent = 'G';
+        // Hide logout, show sign in
+        var logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.textContent = 'Sign In';
+          logoutBtn.onclick = function(){ window.location.href='./index.html'; };
+        }
+      }
+
       if (isAdmin(user)) {
         var adminLink = document.getElementById('adminNavLink');
         if (adminLink) adminLink.style.display = 'inline-flex';
